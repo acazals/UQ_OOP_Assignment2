@@ -15,24 +15,30 @@ public class ExamBlockModel {
     private UnitList myUnits;
     private VenueList myVenues;
     private double Version;
+    private String filename;
 
 
     public ExamBlockModel() {
 
         this.myObservers = new ArrayList<>();
-        this.myExams = new ExamList();
+        this.myExams = new ExamList(getRegistry());
         //this.myRegistry = null; // un initialized
         this.myRooms = new RoomList(this.getRegistry());
-        this.mySessions = new SessionList();
-        this.myStudents = new StudentList();
-        this.mySubjects = new SubjectList();
-        this.myUnits = new UnitList();
-        this.myVenues = new VenueList();
-        this.Title = "Exam Block Model"; // You can change this default if needed
+        this.mySessions = new SessionList(this.getRegistry());
+        this.myStudents = new StudentList(this.getRegistry());
+        this.mySubjects = new SubjectList(this.getRegistry());
+        this.myUnits = new UnitList(this.getRegistry());
+        this.myVenues = new VenueList(this.getRegistry());
+        this.Title = "Exam Block Model"; // default?
         this.Version = 1.0;
+
         }
     public void addObserver(ModelObserver observer) {
         this.myObservers.add(observer);
+    }
+
+    private String getFilename() {
+        return this.filename;
     }
 
     public ExamList getExams() {
@@ -78,6 +84,20 @@ public class ExamBlockModel {
     public void notifyObservers(String property) {
         for (ModelObserver observer : myObservers) {
             observer.modelChanged(property);
+        }
+    }
+
+    public void setFilename( String filename) {
+        this.filename = filename;
+    }
+
+    public void setTitle( String title) {
+        this.Title = title;
+    }
+
+    public void setVersion(double version) {
+        if (this.Version <= version) {
+            this.Version = version;
         }
     }
 

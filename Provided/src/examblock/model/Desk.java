@@ -3,6 +3,7 @@ package examblock.model;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * Represents an individual desk in an exam venue.
@@ -16,9 +17,12 @@ public class Desk {
     private String familyName;
     /** The student's first given name and initial of first middle name, if any. */
     private String givenAndInit;
-    /** The student's family name. */
+    /** The student's exam. */
     private Exam Exam;
-
+    /** The student's family name. */
+    private Student student;
+    /** The student's LUI */
+    private long LUI;
 
 
     /**
@@ -30,8 +34,8 @@ public class Desk {
      */
     public Desk(int deskNumber) {
         id = deskNumber; // Note: does no enforcement of requirements
-        familyName = null; // Should be null per javadoc, NOT empty ""
-        givenAndInit = null; // Will test for this = null, not empty ""
+        familyName = ""; // Should be null per javadoc, NOT empty ""
+        givenAndInit = ""; // Will test for this = null, not empty ""
     }
 
     /**
@@ -64,15 +68,6 @@ public class Desk {
     }
 
     /**
-     * Sets the family name of the student assigned to this desk.
-     *
-     * @param familyName the family name of the student assigned to this desk.
-     */
-    public void setFamilyName(String familyName) {
-        this.familyName = familyName;
-    }
-
-    /**
      * Sets the first given name and initial of the student assigned to this desk.
      *
      * @param givenAndInit a single string with the first given name, a space,
@@ -92,9 +87,9 @@ public class Desk {
     @Override
     public String toString() {
         String assignedStudent = "";
-        if (familyName != null && !familyName.isBlank()) {
+        if (!Objects.equals(familyName, "") && !familyName.isBlank()) {
             assignedStudent = familyName;
-            if (givenAndInit != null && !givenAndInit.isBlank()) {
+            if (!Objects.equals(givenAndInit, "") && !givenAndInit.isBlank()) {
                 assignedStudent += ", " + givenAndInit;
             }
         }
@@ -109,6 +104,13 @@ public class Desk {
         return this.Exam.getTitle();
     }
 
+    public String deskStudent() {
+        return "";
+    }
+
+    public void setStudent(Student student) {
+        this.student = student;
+    }
 
     public void streamOut(BufferedWriter bw) throws IOException {
         // Format: id|familyName|givenAndInit

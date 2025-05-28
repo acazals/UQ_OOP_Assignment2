@@ -4,7 +4,7 @@ import examblock.model.CSSE7023;
 
 import javax.swing.*;
 import java.awt.*;
-
+import java.io.IOException;
 
 
 public class DialogUtils {
@@ -59,8 +59,60 @@ public class DialogUtils {
         );
     }
 
-    public static void showTextViewer (String text, String title, DialogUtils.ViewerOptions option, CSSE7023.FileType fileType) {
+    public static void showTextViewer(String text, String title,
+                                      ViewerOptions option, CSSE7023.FileType fileType) {
+        // Create JTextArea
+        JTextArea textArea = new JTextArea(text);
+        textArea.setEditable(false);
+        boolean wrap = option == ViewerOptions.WRAP; // line wrapping turned on
+        // long line will continue on the next one
+        textArea.setLineWrap(wrap);
+        textArea.setWrapStyleWord(wrap);
+        textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
 
+        // Wrap in JScrollPane
+        JScrollPane scrollPane = new JScrollPane(textArea); // if text too long user can scroll
+        scrollPane.setPreferredSize(new Dimension(600, 400));
+
+        // Create File and View menus with Wrap Text option
+        JMenu fileMenu = new JMenu("File");
+        JMenuItem saveItem = new JMenuItem("Save As...");
+        fileMenu.add(saveItem);
+
+
+        saveItem.setToolTipText("Save the current Exam Block to a file");
+        saveItem.addActionListener(e -> {
+            FileChooser dialog = new FileChooser();
+            String selectedFile = dialog.save(null, fileType);
+            if (!selectedFile.isEmpty()) {
+                try {
+                    //(Write the text passed in to us to selectedFile)
+                } catch (IOException ex) {
+                    //(Let the caller know the save failed)
+                }
+            }
+        });
+        JMenuBar menuBar = new JMenuBar();
+        menuBar.add(fileMenu);
+        JMenu viewMenu = new JMenu("View");
+        JCheckBoxMenuItem wrapTextItem = new JCheckBoxMenuItem("Wrap Text", wrap);
+        wrapTextItem.addActionListener(e -> {
+            boolean wrapState = wrapTextItem.isSelected();
+            textArea.setLineWrap(wrapState);
+            textArea.setWrapStyleWord(wrapState);
+        });
+        viewMenu.add(wrapTextItem);
+        menuBar.add(viewMenu);
+// Create JDialog
+        JDialog dialog = new JDialog(parent == null
+                ? null
+                : SwingUtilities.getWindowAncestor(parent), title);
+        dialog.setJMenuBar(menuBar);
+        dialog.add(scrollPane, BorderLayout.CENTER);
+        dialog.pack();
+        dialog.setLocationRelativeTo(parent);
+        dialog.setModal(true);
+        dialog.setVisible(true);
     }
 
 
