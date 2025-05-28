@@ -6,35 +6,56 @@ import java.util.List;
 /**
  * A collection object for holding and managing {@link Subject}s.
  */
-public class SubjectList {
+public class SubjectList extends ListManager<Subject> {
 
-    /** This instance's list of subjects. */
-    private final List<Subject> subjects;
+
 
     /**
      * Constructs an empty list of {@link Subject}s.
      */
-    public SubjectList() {
-        subjects = new ArrayList<>();
+    public SubjectList(Registry registry) {
+
+        super(Subject::new, registry, Subject.class );
+    }
+
+
+    /**
+     * Finds an item by a key (e.g., ID).
+     *
+     * @param key the text used to identify the item
+     * @return the item if found or null
+     */
+    @Override
+    public Subject find(String key)  {
+        // find an item by a key
+        for (Subject mySUbject : this.getItems()) {
+            if (mySUbject.getId().equals(key)) {
+                return mySUbject;
+            }
+        }
+        return null;
+
     }
 
     /**
-     * Adds a {@link Subject} to this list of {@link Subject}s.
+     * Finds an item by a key (e.g., ID).
      *
-     * @param subject - the subject object being added to this list.
+     * @param key the text used to identify the item
+     * @return the item if found
+     * @throws IllegalStateException if no item is found
      */
-    public void addSubject(Subject subject) {
-        subjects.add(subject);
+    @Override
+    public Subject get(String key)
+            throws IllegalStateException {
+        for (Subject mySUbject : this.getItems()) {
+            if (mySUbject.getId().equals(key)) {
+                return mySUbject;
+            }
+        }
+        throw new IllegalStateException();
     }
 
-    /**
-     * Removes a given {@link Subject} from the {@code SubjectList}.
-     *
-     * @param subject - the subject to remove from this list.
-     */
-    public void removeSubject(Subject subject) {
-        subjects.remove(subject);
-    }
+
 
     /**
      * Get the first {@link Subject} with a matching {@code title}.
@@ -46,7 +67,7 @@ public class SubjectList {
      *         the executing state and the complete list of possible subjects.
      */
     public Subject byTitle(String title) throws IllegalStateException {
-        for (Subject subject : this.subjects) {
+        for (Subject subject : this.getItems()) {
             if (subject.getTitle().equals(title)) {
                 return subject;
             }
@@ -54,16 +75,7 @@ public class SubjectList {
         throw new IllegalStateException("No such subject!");
     }
 
-    /**
-     * Creates a new {@code List} holding {@code references} to all the {@link Subject}s
-     * managed by this {@code SubjectList} and returns it.
-     *
-     * @return a new {@code List} holding {@code references} to all the {@link Subject}s
-     * managed by this {@code SubjectList}.
-     */
-    public List<Subject> all() {
-        return new ArrayList<>(this.subjects);
-    }
+
 
     /**
      * Returns detailed string representations of the contents of this subject list.
@@ -74,7 +86,7 @@ public class SubjectList {
 
         StringBuilder subjectStrings = new StringBuilder();
         int counter = 1;
-        for (Subject subject : this.subjects) {
+        for (Subject subject : this.getItems()) {
             subjectStrings.append(counter);
             subjectStrings.append(". ");
             subjectStrings.append(subject.getFullDetail());
@@ -93,7 +105,7 @@ public class SubjectList {
 
         StringBuilder subjectStrings = new StringBuilder();
         int counter = 1;
-        for (Subject subject : this.subjects) {
+        for (Subject subject : this.getItems()) {
             subjectStrings.append(counter);
             subjectStrings.append(". ");
             subjectStrings.append(subject.toString());

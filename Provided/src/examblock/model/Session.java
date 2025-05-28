@@ -28,23 +28,41 @@ public class Session extends Object implements StreamManager, ManageableListItem
      */
     private int studentCount;
 
-    /** The venue for this session. */
-    private  Venue venue;
-    /** The session number of this session in this venue. */
-    private  int sessionNumber;
-    /** The day this session is occurring. */
-    private  LocalDate day;
-    /** The start time of this session. */
-    private  LocalTime start;
-    /** The list of exams in this session in this venue. */
-    private  ExamList exams;
-    /** The number of rows of desks set up for this session. */
+    /**
+     * The venue for this session.
+     */
+    private Venue venue;
+    /**
+     * The session number of this session in this venue.
+     */
+    private int sessionNumber;
+    /**
+     * The day this session is occurring.
+     */
+    private LocalDate day;
+    /**
+     * The start time of this session.
+     */
+    private LocalTime start;
+    /**
+     * The list of exams in this session in this venue.
+     */
+    private ExamList exams;
+    /**
+     * The number of rows of desks set up for this session.
+     */
     private int rows; // the number of rows of Desks, running across the room left to right.
-    /** The number of columns of desks set up for this session. */
+    /**
+     * The number of columns of desks set up for this session.
+     */
     private int columns; // an optional third (maximum) room object involved in the venue.
-    /** The total number of desks available for this session. */
+    /**
+     * The total number of desks available for this session.
+     */
     private int totalDesks; // the total available Desks (may be less than rows x columns).
-    /** The 2D array (row x column) of all desks available for this session. */
+    /**
+     * The 2D array (row x column) of all desks available for this session.
+     */
     private Desk[][] desks;  // 2D array for desk matrix
 
     private ArrayList<Desk> basicDesk;
@@ -56,10 +74,10 @@ public class Session extends Object implements StreamManager, ManageableListItem
      * The constructor must also prepare the empty (unassigned as yet) desks that will be
      * used in this session. (The session has the same rows and columns of desks as the venue.)
      *
-     * @param venue the exam venue for the new session.
+     * @param venue         the exam venue for the new session.
      * @param sessionNumber the number (unique by venue) of the new session.
-     * @param day the session date.
-     * @param start the start time of the exam window.
+     * @param day           the session date.
+     * @param start         the start time of the exam window.
      */
     public Session(Venue venue, int sessionNumber, LocalDate day, LocalTime start, Registry registry) {
         studentCount = 0;
@@ -67,7 +85,7 @@ public class Session extends Object implements StreamManager, ManageableListItem
         this.sessionNumber = sessionNumber;
         this.day = day;
         this.start = start;
-        this.exams = new ExamList();
+        this.exams = new ExamList(registry);
         rows = venue.getRows();
         columns = venue.getColumns();
         totalDesks = venue.deskCount();
@@ -78,7 +96,8 @@ public class Session extends Object implements StreamManager, ManageableListItem
     }
 
     public Session(BufferedReader br, Registry registry, int nthItem) {
-
+        this.streamIn(br, registry, nthItem);
+        registry.add(this, Session.class);
     }
 
     private void initializeDesks() {
@@ -137,7 +156,7 @@ public class Session extends Object implements StreamManager, ManageableListItem
 
     /**
      * Counts the number of students already scheduled in this {@code Session}.
-     *
+     * <p>
      * Version 1.3: added field studentCount as work-around for bug in Assignment 1
      *
      * @return The number of students already scheduled in this session.
@@ -154,11 +173,11 @@ public class Session extends Object implements StreamManager, ManageableListItem
 
     /**
      * Allocates an exam to this session (Venue and time).
-     *
+     * <p>
      * Version 1.3: added field studentCount as work-around for bug in Assignment 1
      * Version 1.3: added parameter numberStudents as work-around for bug in Assignment 1
      *
-     * @param exam the exam to be allocated to this venue.
+     * @param exam           the exam to be allocated to this venue.
      * @param numberStudents the number of students being added with this allocation.
      */
     public void scheduleExam(Exam exam, int numberStudents) {
@@ -169,7 +188,7 @@ public class Session extends Object implements StreamManager, ManageableListItem
     /**
      * Allocates {@link Student}s to {@link Desk}s for every {@link Exam} in this {@link Session}.
      *
-     * @param exams the current set of Year 12 Exams.
+     * @param exams  the current set of Year 12 Exams.
      * @param cohort all the Year 12 students.
      */
     public void allocateStudents(ExamList exams, StudentList cohort) {
@@ -280,6 +299,44 @@ public class Session extends Object implements StreamManager, ManageableListItem
     }
 
     /**
+     * @param sb - string builder to write in
+     * Prints the layout of the desks in this session in the venue.
+     * Prints a grid of the deskNumber, family name, and given name and initial for each desk.
+     */
+    public void printDesks(StringBuilder sb) {
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
+                String formatted = String.format("%-15s", "Desk " + desks[i][j].deskNumber());
+                sb.append(formatted);
+            }
+            sb.append("\n");
+            for (int j = 0; j < columns; j++) {
+                // print any nulls as empty strings, not a null
+                if (desks[i][j].deskFamilyName() == null) {
+                    String formatted = String.format("%-15s", "");
+                    sb.append(formatted);
+                } else {
+                    String formatted = String.format("%-15s", desks[i][j].deskFamilyName());
+                    sb.append(formatted);
+                }
+            }
+            sb.append("/n");
+            for (int j = 0; j < columns; j++) {
+                // print any nulls as empty strings, not a null
+                if (desks[i][j].deskGivenAndInit() == null) {
+                    String formatted = String.format("%-15s", "");
+                    sb.append(formatted);
+                } else {
+                    String formatted = String.format("%-15s", desks[i][j].deskGivenAndInit());
+                    sb.append(formatted);
+                }
+            }
+            sb.append("\n");
+            sb.append("\n");
+        }
+    }
+
+    /**
      * Returns a string representation of the session's state
      *
      * @return a string representation of the session's state
@@ -295,201 +352,19 @@ public class Session extends Object implements StreamManager, ManageableListItem
                 + this.start.toString();
     }
 
+    @Override
+    public void streamIn(BufferedReader br, Registry registry, int nthItem) throws IOException,
+            RuntimeException {
 
-
+    }
 
     @Override
-    public void streamOut(BufferedWriter bw, int nthItem) throws IOException {
-        // Header line
-        String venueNames = this.getVenue().getRooms().
-                .map(Venue::getId)
-                .collect(Collectors.joining("+"));
-
-        LocalDate date = getDate(); // assume getDate() returns LocalDate
-        LocalTime time = this.getTime(); // assume getStartTime() returns LocalTime
-
-        bw.write(nthItem + ". Venue: " + venueNames +
-                ", Session Number: " + sessionNumber +
-                ", Day: " + date +
-                ", Start: " + time +
-                ", Student Count: " + this.get +
-                ", Exams: " + exams.size());
-        bw.newLine();
-
-        for (Exam exam : exams) {
-            bw.write(exam.getTitle());
-            bw.newLine();
-
-            List<Desk> desks = exam.getDesks();
-            bw.write("[Desks: " + desks.size() + "]");
-            bw.newLine();
-
-            for (Desk desk : desks) {
-                desk.streamOut(bw);
-            }
-        }
-    }
-
-    private String generateExamId(LocalDate mydate, String title) {
-        StringBuilder sb = new StringBuilder();
-
-        // part 1 : subject title
-
-        if (title != null && title!= "") {
-
-            sb.append(title
-                    .trim()
-                    .replaceAll("\\s+", "_") // Replace one or more spaces with a single underscore
-                    .toUpperCase()); // Convert to uppercase for consistency
-        } else {
-            sb.append("UNKNOWN_SUBJECT"); // Fallback if subject or title is null
-        }
-
-        // 2. Append  Date
-        // Using date  (YYYYMMDD)
-        String date = mydate.format(DateTimeFormatter.BASIC_ISO_DATE); // YYYYMMDD
-        sb.append("_").append(date); // Append with an underscore separator
-
-        return sb.toString();
-    }
-
-
-    /***
-     * 1. Venue: V1+V2+V3, Session Number: 1, Day: 2025-03-10, Start: 12:30, Student Count: 53, Exams: 2
-     * Year 12 Internal Assessment Literature
-     *
-     * @param br         reader, already opened
-     * @param registry the global object registry
-     * @param nthItem    a number representing this item's position in the stream. Used for sanity
-     *                   checks
-     * @throws IOException
-     */
-
-    @Override
-    public void streamIn(BufferedReader br, Registry registry, int nthItem) throws IOException {
-        // Read session header
-        String heading = CSSE7023.getLine(br);
-        if (heading == null) {
-            throw new RuntimeException("EOF while reading Session #" + nthItem);
-        }
-
-        String[] parts = heading.split("\\. ", 2); // juste the index plus the rest
-        int index = CSSE7023.toInt(parts[0], "Error parsing Session index");
-        if (index != nthItem) {
-            throw new RuntimeException("Session index mismatch! Expected " + nthItem + " but got " + index);
-        } // not sure where the nth index is actually
-
-        // Metadata parsing
-        String[] fields = parts[1].split(",\\s*");
-
-
-
-        // Read each exam block
-        // Year 12 Internal Assessment Literature
-        int examIndex = 0;
-        while (true) {
-            String examLine = CSSE7023.getLine(br);
-
-            // Stop when we reach a new session (e.g., "2. Venue: ...")
-            if (examLine == null || examLine.matches("^\\d+\\.\\s+Venue:.*")) {
-                // Push line back (optional: depending on stream coordination)
-                break;
-            }
-
-            //  exam title
-            if (examLine.startsWith("Year 12 Internal Assessment") ||
-                    examLine.startsWith("Year 12 External Assessment")) {
-
-                String myttile = "";
-                if (examLine.startsWith("Year 12 Internal Assessment ")) {
-                    myttile = examLine.substring("Year 12 Internal Assessment ".length()).trim();
-                } else if (examLine.startsWith("Year 12 External Assessment ")) {
-                    myttile = examLine.substring("Year 12 External Assessment ".length()).trim();
-                } else {
-                    throw new RuntimeException("Invalid exam line format: " + examLine);
-                }
-
-                String ExamId = this.generateExamId(this.getDate(), myttile); // get the examId
-                // registry.get will return an error if not found
-                Exam myExam = registry.get(ExamId, Exam.class);
-                this.exams.add(myExam);
-
-                // Read [Desks: N]
-                String deskHeader = CSSE7023.getLine(br);
-                if (deskHeader == null || !deskHeader.startsWith("[Desks:")) {
-                    throw new RuntimeException("Expected [Desks: N] after exam title: " + examLine);
-                }
-
-                // replace any character that is not a digit from 0 to 9 to empty string : ""
-                int deskCount = CSSE7023.toInt(deskHeader.replaceAll("[^0-9]", ""),
-                        "Invalid desk count format after exam: " + examLine);
-
-                // Read N desks
-
-                for (int i = 0; i < deskCount; i++) {
-                    // Format: id|familyName|givenAndInit
-                    String DeskLine = CSSE7023.getLine(br);
-
-                    if (DeskLine == null) {
-                        throw new RuntimeException("EOF reading Desk");
-                    }
-
-
-                    String[] DeskParts = heading.split("\\|", -1); // keep empty fields
-                    if (DeskParts.length < 1) {
-                        throw new IOException("Malformed desk input: " + heading);
-                    }
-
-                    int DeskID = CSSE7023.toInt(parts[0], "Number format exception parsing Desk ");
-                    String DeskName = DeskParts.length > 1 ? parts[1] : "";
-                    String DeskGivenAndInit = DeskParts.length > 2 ? parts[2] : "";
-                    Desk myDesk = new Desk(DeskID);
-                    myDesk.setFamilyName(DeskName);
-                    myDesk.setGivenAndInit(DeskGivenAndInit);
-
-                    this.basicDesk.add(myDesk); // fiure out tow and column later
-                }
-
-            } else {
-                throw new RuntimeException("Unexpected line in session body: " + examLine);
-            }
-        }
-
-        if (Verbose.isVerbose()) {
-            System.out.println("Loaded Session #" + nthItem + " with " + examCount + " exams.");
-        }
-    }
-
-    private int MetaDataParsing(String[] fields, Registry registry) {
-
-        String venueId = "";
-        int examCount = 0;
-
-        for (String field : fields) {
-            if (field.startsWith("Venue:")) {
-                venueId = field.split(":")[1].trim();
-                this.venue = registry.get(venueId, Venue.class);
-            } else if (field.startsWith("Session Number:")) {
-                this.sessionNumber = CSSE7023.toInt(field.split(":")[1].trim(), " can t convert session number to an int");
-            } else if (field.startsWith("Day:")) {
-                this.day = CSSE7023.toLocalDate(field.split(":")[1].trim(), " can t convert to a date");
-            } else if (field.startsWith("Start:")) {
-                this.start = CSSE7023.toLocalTime(field.split(":")[1].trim(), " Can t convert to a time");
-            } else if (field.startsWith("Student Count:")) {
-                this.studentCount = CSSE7023.toInt(field.split(":")[1].trim(), "Can t convert studentcount to an int");
-            } else if (field.startsWith("Exams:")) {
-                examCount = Integer.parseInt(field.split(":")[1].trim());
-                // number of exams
-            }
-        }
-        return examCount;
+    public void streamOut(BufferedWriter bw, int nthItem) throws IOException
+    {
 
     }
-
-
-
-
-
-
-
 }
+
+
+
+

@@ -6,35 +6,60 @@ import java.util.List;
 /**
  * A collection object for holding and managing {@link Subject} {@link Unit}s.
  */
-public class UnitList {
+public class UnitList extends ListManager<Unit>
+{
 
-    /** This instance's list of units. */
-    private final List<Unit> units;
+
 
     /**
      * Constructs an empty list of {@link Unit}s.
      */
-    public UnitList() {
-        units = new ArrayList<>();
+    public UnitList(Registry registry) {
+
+        super(Unit::new, registry, Unit.class);
     }
 
-    /**
-     * Adds a {@link Unit} to this list of {@link Unit}s.
-     *
-     * @param unit - the unit object being added to this list.
-     */
-    public void addUnit(Unit unit) {
-        units.add(unit);
-    }
 
     /**
-     * Removes a given {@link Unit} from the {@code UnitList}.
+     * Finds an item by a key (e.g., ID).
      *
-     * @param unit - the unit to remove from this list.
+     * @param key the text used to identify the item
+     * @return the item if found or null
      */
-    public void removeUnit(Unit unit) {
-        this.units.remove(unit);
+    @Override
+    public Unit find(String key)  {
+        // find an item by a key
+        for (Unit myunit : this.getItems()) {
+            if (myunit.getId().equals(key)) {
+                return myunit;
+            }
+        }
+        return null;
+
     }
+
+
+    /**
+     * Finds an item by a key (e.g., ID).
+     *
+     * @param key the text used to identify the item
+     * @return the item if found
+     * @throws IllegalStateException if no item is found
+     */
+    @Override
+    public Unit get(String key)
+            throws IllegalStateException {
+        for (Unit myunit : this.getItems()) {
+            if (myunit.getId().equals(key)) {
+                return myunit;
+            }
+        }
+        throw new IllegalStateException();
+    }
+
+
+
+
 
     /**
      * Get the first {@link Unit} with a matching {@link Subject} and {@code unitId}.
@@ -48,7 +73,7 @@ public class UnitList {
      *         the executing state and the complete list of possible units.
      */
     public Unit getUnit(String title, Character unitId) throws IllegalStateException {
-        for (Unit unit : this.units) {
+        for (Unit unit : this.getItems()) {
             if (unit.getSubject().getTitle().equals(title) && unit.id() == unitId) {
                 return unit;
             }
@@ -56,16 +81,16 @@ public class UnitList {
         throw new IllegalStateException("No such unit!");
     }
 
-    /**
-     * Creates a new {@code List} holding {@code references} to all the {@link Unit}s
-     * managed by the {@code UnitList} and returns it.
-     *
-     * @return a new {@code List} holding {@code references} to all the {@link Unit}s
-     * managed by the {@code UnitList}.
-     */
-    public List<Unit> all() {
-        return new ArrayList<>(this.units);
-    }
+//    /**
+//     * Creates a new {@code List} holding {@code references} to all the {@link Unit}s
+//     * managed by the {@code UnitList} and returns it.
+//     *
+//     * @return a new {@code List} holding {@code references} to all the {@link Unit}s
+//     * managed by the {@code UnitList}.
+//     */
+//    public List<Unit> all() {
+//        return new ArrayList<>(this.units);
+//    }
 
     /**
      * Returns detailed string representations of the contents of this unit list.
@@ -74,7 +99,7 @@ public class UnitList {
      */
     public String getFullDetail() {
         StringBuilder unitStrings = new StringBuilder();
-        for (Unit unit : this.units) {
+        for (Unit unit : this.getItems()) {
             unitStrings.append(unit.getFullDetail());
             unitStrings.append("\n");
         }
@@ -89,7 +114,7 @@ public class UnitList {
     @Override
     public String toString() {
         StringBuilder unitStrings = new StringBuilder();
-        for (Unit unit : this.units) {
+        for (Unit unit : this.getItems()) {
             unitStrings.append(unit.toString());
             unitStrings.append("\n");
         }

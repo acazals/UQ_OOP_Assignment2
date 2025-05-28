@@ -1,40 +1,68 @@
 package examblock.model;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * A collection object for holding and managing {@link Venue}s.
  */
-public class VenueList {
+public class VenueList extends ListManager<Venue> {
 
-    /** This instance's list of venues. */
-    private final List<Venue> venues;
+
 
     /**
      * Constructs an empty list of {@link Venue}s.
      */
-    public VenueList() {
-        venues = new ArrayList<>();
+    public VenueList( Registry registry) {
+
+        super(Venue::new, registry, Venue.class);
     }
 
     /**
-     * Adds a {@link Venue} to this list of {@link Venue}s.
+     * Finds an item by a key (e.g., ID).
      *
-     * @param venue - the venue object being added to this list.
+     * @param key the text used to identify the item
+     * @return the item if found or null
      */
-    public void addVenue(Venue venue) {
-        venues.add(venue);
+    @Override
+    public Venue find(String key)  {
+        // find an item by a key
+        for (Venue myVenue : this.getItems()) {
+            if (myVenue.getId().equals(key)) {
+                return myVenue;
+            }
+        }
+        return null;
+
     }
 
+
     /**
-     * Removes a given {@link Venue} from the {@code VenueList}.
+     * Finds an item by a key (e.g., ID).
      *
-     * @param venue the venue to remove from this list.
+     * @param key the text used to identify the item
+     * @return the item if found
+     * @throws IllegalStateException if no item is found
      */
-    public void removeVenue(Venue venue) {
-        venues.remove(venue);
+    @Override
+    public Venue get(String key)
+            throws IllegalStateException {
+        for (Venue myVenue : this.getItems()) {
+            if (myVenue.getId().equals(key)) {
+                return myVenue;
+            }
+        }
+        throw new IllegalStateException();
     }
+
+    public void addVenue( Venue venue) {
+        this.add(venue);
+    }
+
+    public void removeVenue( Venue venue) {
+        this.remove(venue);
+    }
+
+
 
     /**
      * Get the first {@link Venue} with a matching {@code id}.
@@ -46,23 +74,12 @@ public class VenueList {
      *         the executing state and the complete list of possible venues.
      */
     public Venue getVenue(String id) throws IllegalStateException {
-        for (Venue venue : this.venues) {
+        for (Venue venue : this.getItems()) {
             if (venue.venueId().equals(id)) {
                 return venue;
             }
         }
         throw new IllegalStateException("No such venue!");
-    }
-
-    /**
-     * Creates a new {@code List} holding {@code references} to all the {@link Venue}s
-     * managed by the {@code VenueList} and returns it.
-     *
-     * @return a new {@code List} holding {@code references} to all the {@link Venue}s
-     * managed by the {@code VenueList}.
-     */
-    public List<Venue> all() {
-        return new ArrayList<>(this.venues);
     }
 
     /**
@@ -74,7 +91,7 @@ public class VenueList {
      */
     public void allocateStudents(SessionList sessions, ExamList exams, StudentList cohort) {
         List<Session> sessionList;
-        for (Venue venue : this.venues) {
+        for (Venue venue : this.getItems()) {
             // get the list of sessions for this venue
             sessionList = sessions.forVenue(venue);
             for (Session session : sessionList) {
@@ -91,7 +108,7 @@ public class VenueList {
      */
     public void printAllocations(SessionList sessions) {
         List<Session> sessionList;
-        for (Venue venue : this.venues) {
+        for (Venue venue : this.getItems()) {
             System.out.println(venue);
             // get the list of sessions for this venue
             sessionList = sessions.forVenue(venue);
@@ -103,6 +120,25 @@ public class VenueList {
         }
     }
 
+    public void writeAllocations(StringBuilder sb,
+                                 SessionList sessions) {
+        List<Session> sessionList;
+        for (Venue venue : this.getItems()) {
+            sb.append(venue.toString());
+            // get the list of sessions for this venue
+            sessionList = sessions.forVenue(venue);
+            for (Session session : sessionList) {
+                sb.append(session.toString());
+                session.printDesks(sb);
+            }
+            sb.append("-".repeat(75));
+        }
+        // JAVADOC :  This version prints to the console.
+        System.out.print(sb.toString());
+
+
+    }
+
     /**
      * Returns detailed string representations of the contents of this venue list.
      *
@@ -112,7 +148,7 @@ public class VenueList {
 
         StringBuilder venueStrings = new StringBuilder();
         int counter = 1;
-        for (Venue venue : this.venues) {
+        for (Venue venue : this.getItems()) {
             venueStrings.append(counter);
             venueStrings.append(". ");
             venueStrings.append(venue.venueId());
@@ -132,7 +168,7 @@ public class VenueList {
 
         StringBuilder venueStrings = new StringBuilder();
         int counter = 1;
-        for (Venue venue : this.venues) {
+        for (Venue venue : this.getItems()) {
             venueStrings.append(counter);
             venueStrings.append(". ");
             venueStrings.append(venue.toString());

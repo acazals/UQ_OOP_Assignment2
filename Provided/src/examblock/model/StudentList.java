@@ -2,30 +2,45 @@ package examblock.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A collection object for holding and managing {@link Student}s.
  */
-public class StudentList {
+public class StudentList extends ListManager<Student> {
 
-    /** This instance's list of students. */
-    private final List<Student> students;
+
 
     /**
      * Constructs an empty list of {@link Student}s.
      */
-    public StudentList() {
-        this.students = new ArrayList<>();
+    public StudentList(Registry registry){
+        super(Student::new, registry, Student.class);
     }
 
-    /**
-     * Adds a {@link Student} to this list of {@link Student}s.
-     *
-     * @param student - the student object being added to this list.
-     */
-    public void add(Student student) {
-        this.students.add(student);
+    @Override
+    public Student find(String key)  {
+        // find an item by a key
+        for (Student myStudent : this.getItems()) {
+            if (myStudent.getId().equals(key)) {
+                return myStudent;
+            }
+        }
+        return null;
+
     }
+
+    @Override
+    public Student get(String key)
+            throws IllegalStateException {
+        for (Student myStudent : this.getItems()) {
+            if (myStudent.getId().equals(key)) {
+                return myStudent;
+            }
+        }
+        throw new IllegalStateException();
+    }
+
 
     /**
      * Get the {@link Student} with a matching {@code LUI}.
@@ -37,24 +52,15 @@ public class StudentList {
      *         the executing state and the complete list of possible students.
      */
     public Student byLui(Long lui) throws IllegalStateException {
-        for (Student student : this.students) {
-            if (student.getLui() == lui) {
+        for (Student student : this.getItems()) {
+            if (Objects.equals(student.getLui(), lui)) {
                 return student;
             }
         }
         throw new IllegalStateException("No such student!");
     }
 
-    /**
-     * Creates a new {@code List} holding {@code references} to all the {@link Student}s
-     * managed by this {@code StudentList} and returns it.
-     *
-     * @return a new {@code List} holding {@code references} to all the {@link Student}s
-     * managed by this {@code StudentList}.
-     */
-    public List<Student> all() {
-        return new ArrayList<>(this.students);
-    }
+
 
     /**
      * Counts the number of either non-AARA or AARA students taking a particular {@link Subject}.
@@ -65,7 +71,7 @@ public class StudentList {
      */
     public int countStudents(Subject subject, boolean aara) {
         int count = 0;
-        for (Student student : this.students) {
+        for (Student student : this.getItems()) {
             if (student.isAara() == aara) {
                 List<Subject> subjects = student.getSubjects().all();
                 for (Subject check : subjects) {
@@ -93,7 +99,7 @@ public class StudentList {
                 """;
 
         StringBuilder studentStrings = new StringBuilder();
-        for (Student student : this.students) {
+        for (Student student : this.getItems()) {
             studentStrings.append(student.getFullDetail());
             studentStrings.append("\n");
         }
@@ -116,7 +122,7 @@ public class StudentList {
                 """;
 
         StringBuilder studentStrings = new StringBuilder();
-        for (Student student : this.students) {
+        for (Student student : this.getItems()) {
             studentStrings.append(student.toString());
         }
         return studentStrings.toString();

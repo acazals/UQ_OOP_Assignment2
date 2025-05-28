@@ -1,23 +1,32 @@
 package examblock.model;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * A collection object for holding and managing {@link Exam}s.
  */
-public class ExamList extends ListManager<Exam> implements  StreamManager {
+public class ExamList extends ListManager<Exam> {
 
-    /** This instance's list of exams. */
-    private final List<Exam> exams;
+
 
     /**
      * Constructs an empty list of {@link Exam}s.
      */
-    public ExamList(Registry registry) {
+//    public ExamList(Registry registry) {
+//        super(new ItemFactory<Exam>() {
+//            @Override
+//            public Exam createItem(BufferedReader br, Registry registry, int index) throws IOException {
+//                return new Exam(br, registry, index);  // ✅ uses the allowed constructor
+//            }
+//        }, registry, Exam.class);
+//
+//    }
 
-        exams = new ArrayList<>();
-        registry.add(this, ExamList.class);
+    public ExamList( Registry registry) {
+        super(Exam::new, registry, Exam.class);
     }
 
     /**
@@ -26,7 +35,7 @@ public class ExamList extends ListManager<Exam> implements  StreamManager {
      * @param exam - the exam object being added to this list.
      */
     public void add(Exam exam) {
-        exams.add(exam);
+        super.getItems().add(exam);
     }
 
     /**
@@ -35,7 +44,7 @@ public class ExamList extends ListManager<Exam> implements  StreamManager {
      * @param exam - the subject to remove from this list.
      */
     public void removeExam(Exam exam) {
-        exams.remove(exam);
+        this.getItems().remove(exam);
     }
 
     /**
@@ -48,7 +57,7 @@ public class ExamList extends ListManager<Exam> implements  StreamManager {
      *         the executing state and the complete list of possible exams.
      */
     public Exam bySubjectTitle(String title) throws IllegalStateException {
-        for (Exam exam : this.exams) {
+        for (Exam exam : super.getItems()) {
             if (exam.getSubject().getTitle().equals(title)) {
                 return exam;
             }
@@ -68,7 +77,7 @@ public class ExamList extends ListManager<Exam> implements  StreamManager {
         StringBuilder examStrings = new StringBuilder();
         examStrings.append("Exams:\n");
         int counter = 1;
-        for (Exam exam : exams) {
+        for (Exam exam : super.getItems()) {
             examStrings.append(counter);
             examStrings.append(". ");
             examStrings.append(exam.getFullDetail());
@@ -81,7 +90,7 @@ public class ExamList extends ListManager<Exam> implements  StreamManager {
     @Override
     public Exam find(String key)  {
         // find an item by a key
-        for (Exam myExam : this.exams) {
+        for (Exam myExam : this.getItems()) {
             if (myExam.getId().equals(key)) {
                 return myExam;
             }
@@ -93,7 +102,7 @@ public class ExamList extends ListManager<Exam> implements  StreamManager {
     @Override
     public Exam get(String key) throws IllegalStateException {
         // find an item by a key
-        for (Exam exam : this.exams ) {
+        for (Exam exam : super.getItems() ) {
             if (exam.getId().equals(key)) {
                 return exam;
             }
@@ -104,7 +113,7 @@ public class ExamList extends ListManager<Exam> implements  StreamManager {
 
     public Exam byShortTitle( String shortTitle) throws IllegalStateException {
         // finds an exam given it s short title
-        for (Exam exam : this.exams) {
+        for (Exam exam : super.getItems()) {
             if (exam.getShortTitle().equals(shortTitle)) {
                 return exam;
             }
@@ -121,7 +130,7 @@ public class ExamList extends ListManager<Exam> implements  StreamManager {
     public String toString() {
         StringBuilder examStrings = new StringBuilder();
         int counter = 1;
-        for (Exam exam : exams) {
+        for (Exam exam : this.getItems()) {
             examStrings.append(counter);
             examStrings.append(". ");
             examStrings.append(exam.toString());

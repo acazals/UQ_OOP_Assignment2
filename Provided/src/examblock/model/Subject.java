@@ -1,5 +1,7 @@
 package examblock.model;
 
+import examblock.view.components.Verbose;
+
 import java.io.BufferedWriter;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -21,7 +23,9 @@ public class Subject implements ManageableListItem, StreamManager {
 
     /**
      * GenerateId : used to create id string
-     *
+     * ID has to be only the title because StreamIn students needs
+     * to check if the subject exists and only a
+     * has the title
      * @param title title of the subject
      *@param description title of the subject
      * @return String : id used
@@ -125,10 +129,7 @@ public class Subject implements ManageableListItem, StreamManager {
      *
      */
     public Subject(BufferedReader br, Registry registry, int nthItem) throws IOException, RuntimeException {
-        ArrayList<String> result = getTitleDescription(br, registry, nthItem);
-        this.title = result.get(0).trim();
-        this.description = result.get(1).trim();
-        this.id = result.get(2).trim();
+        this.streamIn(br, registry, nthItem);
         registry.add(this, Subject.class);
     }
 
@@ -261,12 +262,43 @@ public class Subject implements ManageableListItem, StreamManager {
      * @param registry  registry
      * @param nthItem int
      */
+
     @Override
-    public void streamIn(BufferedReader br, Registry registry, int nthItem) throws IOException, RuntimeException {
-        ArrayList<String> result = this.getTitleDescription(br, registry, nthItem);
-        this.title = result.get(0).trim();
-        this.description = result.get(1).trim();
-        this.id = result.get(2).trim();
+    public void streamIn(BufferedReader br, Registry registry, int nthItem)
+            throws IOException, RuntimeException {
+
+        // Example: 1. ACCOUNTING
+        String heading = CSSE7023.getLine(br);
+        if (heading == null) {
+            throw new RuntimeException("EOF reading Subject #" + nthItem);
+        }
+
+        var bits = heading.split("\\. ");
+        int index = CSSE7023.toInt(bits[0], "Number format exception parsing Subject " + nthItem + " header");
+
+        if (index != nthItem) {
+            throw new RuntimeException("Subject index out of sync!");
+        }
+
+        // ID (e.g., "ACCOUNTING")
+        this.id = bits[1].trim();
+
+        // Title (e.g., "Accounting")
+        this.title = CSSE7023.getLine(br).trim();
+
+        // Description (quoted, ends with semicolon)
+        String descLine = CSSE7023.getLine(br).trim();
+
+        // Remove quotes if present
+        if (descLine.startsWith("\"") && descLine.endsWith("\"")) {
+            descLine = descLine.substring(1, descLine.length() - 1);
+        }
+
+        this.description = descLine;
+
+        if (Verbose.isVerbose()) {
+            System.out.println("Loaded Subject: " + id);
+        }
     }
 
     @Override
@@ -278,4 +310,6 @@ public class Subject implements ManageableListItem, StreamManager {
     public Object[] toTableRow() {
         return new Object[] { id, title, description };
     }
+
+
 }

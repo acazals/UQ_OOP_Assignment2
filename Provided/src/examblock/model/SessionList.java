@@ -4,20 +4,52 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * A collection object for holding and managing {@link Exam} {@link Session}s.
  */
-public class SessionList {
+public class SessionList extends ListManager<Session> {
 
-    /** This instance's list of sessions. */
-    private final List<Session> sessions;
 
     /**
      * Constructs a new empty SessionList.
      */
-    public SessionList() {
-        sessions = new ArrayList<Session>();
+    public SessionList(Registry registry) {
+
+        super(Session::new, registry, Session.class);
+    }
+
+    /**
+     * Finds an item by a key (e.g., ID).
+     *
+     * @param key the text used to identify the item
+     * @return the item if found or null
+     */
+    @Override
+    public Session find(String key) {
+        Optional<Session> p = all()
+                .stream()
+                .filter(pn -> pn.getId().equals(key))
+                .findFirst();
+
+        return p.orElse(null);
+    }
+
+    /**
+     * Finds an item by a key (e.g., ID).
+     *
+     * @param key the text used to identify the item
+     * @return the item if found
+     * @throws IllegalStateException if no item is found
+     */
+    @Override
+    public Session get(String key) throws IllegalStateException {
+        Session p = find(key);
+        if (p != null) {
+            return p;
+        }
+        throw new IllegalStateException("Item with ID " + key + " not found for type Session");
     }
 
     /**
@@ -26,7 +58,7 @@ public class SessionList {
      * @param session the given {@link Session} for this {@code SessionList} to manage.
      */
     public void add(Session session) {
-        sessions.add(session);
+        this.getItems().add(session);
     }
 
     /**
@@ -35,7 +67,7 @@ public class SessionList {
      * @param session the given {@link Session} from this {@code SessionList}.
      */
     public void remove(Session session) {
-        sessions.remove(session);
+        this.getItems().remove(session);
     }
 
     /**
@@ -48,7 +80,7 @@ public class SessionList {
      * @return the sessionNumber of a session at a particular time in a given Venue, else zero.
      */
     public int getSessionNumber(Venue venue, LocalDate day, LocalTime start) {
-        for (Session session : sessions) {
+        for (Session session : this.getItems()) {
             if (session.getVenue().venueId().equals(venue.venueId())
                     && session.getDate().equals(day) && session.getTime().equals(start)) {
                 return session.getSessionNumber();
@@ -68,7 +100,7 @@ public class SessionList {
      * the complete list of all sessions.
      */
     public Session getSession(Venue venue, int sessionNumber) throws IllegalStateException {
-        for (Session session : sessions) {
+        for (Session session : this.getItems()) {
             if (session.getVenue().venueId().equals(venue.venueId())
                     && session.getSessionNumber() == sessionNumber) {
                 return session;
@@ -89,7 +121,7 @@ public class SessionList {
      */
     public Session getSession(Venue venue, Exam exam) throws IllegalStateException {
         System.out.println(exam.getTitle());
-        for (Session session : sessions) {
+        for (Session session : this.getItems()) {
             System.out.println(exam.getTitle());
             List<Exam> examList = session.getExams();
             System.out.println(exam.getTitle());
@@ -150,8 +182,8 @@ public class SessionList {
         if (sessionNumber == 0) {
             System.out.println("There is currently no exam session in that venue at that time.");
             System.out.println("Creating a session...");
-            session = new Session(venue, getNextSessionNumber(venue), day, start);
-            sessions.add(session);
+            session = new Session(venue, getNextSessionNumber(venue), day, start, this.getRegistry());
+            this.getItems().add(session);
         }
         // Redo the getSession in case it was already existing.
         sessionNumber = this.getSessionNumber(venue, day, start);
@@ -170,7 +202,7 @@ public class SessionList {
 
     private int getNextSessionNumber(Venue venue) {
         int nextSessionNumber = 1;
-        for (Session session : sessions) {
+        for (Session session : this.getItems()) {
             if (session.getVenue().venueId().equals(venue.venueId())
                     && session.getSessionNumber() >= nextSessionNumber) {
                 nextSessionNumber = session.getSessionNumber() + 1;
@@ -209,21 +241,11 @@ public class SessionList {
      */
     public List<Session> forVenue(Venue venue) {
         List<Session> sessionList = new ArrayList<Session>();
-        for (Session session : sessions) {
+        for (Session session : this.getItems()) {
             if (session.getVenue().venueId().equals(venue.venueId())) {
                 sessionList.add(session);
             }
         }
         return sessionList;
-    }
-
-    /**
-     * Creates a new list holding {@code references} to all the {@link Session}s
-     * in this {@code SessionList}.
-     *
-     * @return A new list holding {@code references} to all the sessions in this sessionList.
-     */
-    public List<Session> all() {
-        return new ArrayList<>(sessions);
     }
 }
