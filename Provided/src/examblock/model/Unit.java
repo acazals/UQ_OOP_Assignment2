@@ -5,6 +5,7 @@ import examblock.view.components.Verbose;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * An object describing a single-semester Year 12 Unit of a Year 12 Subject.
@@ -21,6 +22,8 @@ public class Unit implements StreamManager, ManageableListItem {
     /** The description of the Unit. */
     private String description;
 
+    // ID for a unit :
+    // Subject.getID + Unit + Title + Description
     /**
      * Constructs a new {@link Subject} {@code Unit} object.
      * Consists of a parent {@link Subject},
@@ -51,7 +54,7 @@ public class Unit implements StreamManager, ManageableListItem {
         registry.add(this, Unit.class);
     }
 
-    public Unit(BufferedReader br, Registry registry, int nthItem) throws IOException {
+    public Unit(BufferedReader br, Registry registry, int nthItem) throws IOException, RuntimeException {
         this.streamIn(br, registry, nthItem);
         registry.add(this, Unit.class);
     }
@@ -83,21 +86,6 @@ public class Unit implements StreamManager, ManageableListItem {
         return description;
     }
 
-    /**
-     * Returns a detailed string representation of this unit.
-     *
-     * @return a detailed string representation of this unit.
-     */
-    public String getFullDetail() {
-        return subject.getTitle() + ": Unit "
-                + unitId + ": "
-                + title
-                + "\n"
-                + '"'
-                + description
-                + '"'
-                + "\n";
-    }
 
     /**
      * Returns a brief string representation of this unit.
@@ -111,6 +99,37 @@ public class Unit implements StreamManager, ManageableListItem {
                 + title;
     }
 
+    /**
+     * Returns a detailed string representation of this unit.
+     *
+     * @return a detailed string representation of this unit.
+     */
+    @Override
+    public String getFullDetail() {
+        // Line 1: nthItem. SUBJECT_ID
+        StringBuilder total = new StringBuilder();
+        total.append("1.").append(". ").append(subject.getId());
+
+        total.append("\n");
+
+        // Line 2: Subject title, Unit ID, and Unit title
+
+        total.append(subject.getTitle())
+                .append(", Unit ")
+                .append(this.unitId)
+                .append(": ")
+                .append(title);
+
+        total.append("\n");
+
+        // Line 3: Quoted description
+
+        total.append("\"").append(description).append("\"");
+
+        total.append("\n");
+        return total.toString();
+    }
+
 
     /**
      *
@@ -118,7 +137,7 @@ public class Unit implements StreamManager, ManageableListItem {
      *  3. ANCIENT HISTORY
      * Ancient History, Unit 3: Reconstructing the Ancient World
      * "Investigate significant historical periods through an analysis
-     * of relevant archaeological and written sources.
+     * of relevant archaeological and written sources."
      *
      *
      * */
@@ -149,7 +168,7 @@ public class Unit implements StreamManager, ManageableListItem {
 
 
     @Override
-    public void streamIn(BufferedReader br, Registry registry, int nthItem) throws IOException {
+    public void streamIn(BufferedReader br, Registry registry, int nthItem) throws IOException, RuntimeException {
         // Line 1: "3. ANCIENT HISTORY"
         String line1 = CSSE7023.getLine(br);
         if (line1 == null) {
@@ -165,6 +184,11 @@ public class Unit implements StreamManager, ManageableListItem {
         String subjectTitle = bits[1].trim();
         String subjectId = subjectTitle.trim().toLowerCase().replaceAll("[^a-z0-9]+", "_");
         this.subject = registry.get(subjectId, Subject.class);
+        // registry.all( SUbject.class)
+        // loop through all of them
+        // no
+        // unit : look at the members of my private attributes
+        //
 
 
         // Line 2: "Ancient History, Unit 3: Reconstructing the Ancient World"
@@ -200,4 +224,22 @@ public class Unit implements StreamManager, ManageableListItem {
             System.out.println("Loaded Unit: " + subjectId + " - Unit " + unitId);
         }
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Unit unit)) return false;
+        return Objects.equals(getSubject(), unit.getSubject()) && Objects.equals(unitId, unit.unitId) && Objects.equals(title, unit.title) && Objects.equals(getDescription(), unit.getDescription());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getSubject(), unitId, title, getDescription());
+    }
+
+    @Override
+    public Object[] toTableRow() {
+        return new Object[] { this.subject.getTitle(), this.unitId, this.title };
+    }
+
+
 }

@@ -16,7 +16,7 @@ import java.awt.event.FocusAdapter;
 
 import static examblock.model.CSSE7023.FileType.*;
 import static examblock.model.CSSE7023.isBadVersion;
-import static jdk.jfr.internal.consumer.EventLog.update;
+
 
 public class FileChooser {
     private String title;

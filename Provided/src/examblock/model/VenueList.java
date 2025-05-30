@@ -24,7 +24,7 @@ public class VenueList extends ListManager<Venue> {
      * @return the item if found or null
      */
     @Override
-    public Venue find(String key)  {
+    public Venue find(String key)  throws IllegalStateException {
         // find an item by a key
         for (Venue myVenue : this.getItems()) {
             if (myVenue.getId().equals(key)) {

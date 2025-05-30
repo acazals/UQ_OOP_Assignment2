@@ -38,14 +38,7 @@ public class ExamList extends ListManager<Exam> {
         super.getItems().add(exam);
     }
 
-    /**
-     * Removes a given {@link Exam} from this {@code ExamList}.
-     *
-     * @param exam - the subject to remove from this list.
-     */
-    public void removeExam(Exam exam) {
-        this.getItems().remove(exam);
-    }
+
 
     /**
      * Get the first {@link Exam} with a matching {@link Subject} {@code title}.

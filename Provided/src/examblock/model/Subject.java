@@ -6,6 +6,7 @@ import java.io.BufferedWriter;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * An object describing a single Year 12 Subject.
@@ -209,23 +210,6 @@ public class Subject implements ManageableListItem, StreamManager {
         return result.toString().trim();
     }
 
-    /**
-     * Returns a detailed string representation of this subject.
-     * Returns the {@code title} in all uppercase, then on a new line,
-     * the entire text {@code description} inside double quotes.
-     *
-     * @return a string representation of this subject.
-     */
-    @Override
-    public String getFullDetail() {
-        String title = this.getTitle().toUpperCase();
-        return title
-                + "\n"
-                + '"'
-                + this.getDescription()
-                + '"'
-                + "\n";
-    }
 
     /**
      * Returns a brief string representation of this subject.
@@ -236,6 +220,26 @@ public class Subject implements ManageableListItem, StreamManager {
     @Override
     public String toString() {
         return this.getTitle().toUpperCase() + "\n";
+    }
+
+    /**
+     * Returns a detailed string representation of this subject.
+     * Returns the {@code title} in all uppercase, then on a new line,
+     * the entire text {@code description} inside double quotes.
+     *
+     * @return a string representation of this subject.
+     */
+    @Override
+    public String getFullDetail() {
+        StringBuilder total = new StringBuilder();
+        total.append(1 + ". ").append(title.toUpperCase());
+        total.append("\n");
+        total.append(title);
+        total.append("\n");
+        total.append("\"").append(description).append("\"");
+        total.append("\n");
+
+        return total.toString();
     }
 
 
@@ -308,8 +312,17 @@ public class Subject implements ManageableListItem, StreamManager {
 
     @Override
     public Object[] toTableRow() {
-        return new Object[] { id, title, description };
+        return new Object[] { title, description };
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Subject subject)) return false;
+        return Objects.equals(getTitle(), subject.getTitle()) && Objects.equals(getDescription(), subject.getDescription()) && Objects.equals(getId(), subject.getId());
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(getTitle(), getDescription(), getId());
+    }
 }

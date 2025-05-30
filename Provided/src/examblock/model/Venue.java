@@ -211,6 +211,26 @@ public class Venue extends Room {
         return id;
     }
 
+    /**
+     * Returns a detailed string representation of this exam
+     *
+     * @return a detailed string representation of this exam.
+     */
+    @Override
+    public String getFullDetail(){
+        // First line: e.g. "7. W1+W2 (15 desks)"
+        StringBuilder total = new StringBuilder();
+        total.append(1 + ". ").append(this.getId()).append(" (").append(totalDesks).append(" desks)");
+        total.append("\n");
+
+        String roomNames = this.getRoomNames();
+
+        total.append("Room Count: ").append(roomCount).append(", Rooms: ").append(roomNames).append(", Rows: ").append(rows).append(", Columns: ").append(columns).append(", Desks: ").append(totalDesks).append(", AARA: ").append(aara);
+        total.append("\n");
+
+        return total.toString();
+    }
+
     @Override
     public void streamOut(BufferedWriter bw, int nthItem) throws IOException {
         // First line: e.g. "7. W1+W2 (15 desks)"
@@ -247,7 +267,7 @@ public class Venue extends Room {
     public void streamIn(BufferedReader br,
                          Registry registry,
                          int nthItem)
-            throws IOException, RuntimeException {
+            throws IOException {
 
         //    1. R1
 
@@ -324,15 +344,6 @@ public class Venue extends Room {
                 '}';
     }
 
-    /**
-     * Returns a detailed string representation of this exam
-                *
-                * @return a detailed string representation of this exam.
-                */
-    @Override
-    public String getFullDetail(){
-        return toString();
-    }
 
     @Override
     public Object[] toTableRow() {
@@ -342,9 +353,6 @@ public class Venue extends Room {
         return new Object[] {
                 id,           // Venue ID
                 roomCount,    // Number of rooms
-                roomIds,      // Room IDs as string
-                rows,         // Number of rows
-                columns,      // Number of columns
                 totalDesks,   // Total desks
                 aara          // AARA suitability
         };

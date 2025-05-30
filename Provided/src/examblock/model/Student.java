@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.Objects;
 
 /**
  * An object describing a single Year 12 Student.
@@ -51,16 +52,19 @@ public class Student implements StreamManager, ManageableListItem {
 
     private Registry registry;
 
+    private int  nthIndex;
+
     private String generateId() {
         return this.lui.toString();
     }
 
-    public Student(BufferedReader br, Registry registry, int nthItem) throws IOException {
+    public Student(BufferedReader br, Registry registry, int nthItem) throws IOException, RuntimeException {
         subjects = new SubjectList(registry);
-        units = new UnitList();
+        units = new UnitList(registry);
         exams = new ExamList(registry);
         this.streamIn(br, registry, nthItem);
         this.registry = registry;
+        this.nthIndex = registry.count(Student.class);
         registry.add(this, Student.class);
 
 
@@ -94,9 +98,10 @@ public class Student implements StreamManager, ManageableListItem {
                    int month, int year, String house, Registry registry) {
         this(lui, givenNames, familyName, day, month, year, house, false, registry);
         subjects = new SubjectList(registry);
-        units = new UnitList();
+        units = new UnitList(registry);
         exams = new ExamList(registry);
         this.registry = registry;
+        this.nthIndex = registry.count(Student.class);
         registry.add(this, Student.class);
     }
 
@@ -137,9 +142,9 @@ public class Student implements StreamManager, ManageableListItem {
         this.house = house;
         this.aara = aara;
         subjects = new SubjectList(registry);
-        units = new UnitList();
+        units = new UnitList(registry);
         exams = new ExamList(registry);
-
+        this.nthIndex = registry.count(Student.class);
         this.registry = registry;
         registry.add(this, Student.class);
     }
@@ -326,22 +331,7 @@ public class Student implements StreamManager, ManageableListItem {
         this.subjects.remove(subject);
     }
 
-    /**
-     * Creates and returns a string representation of this student's detailed state.
-     *
-     * @return the string representation of this student's detailed state.
-     */
-    public String getFullDetail() {
-        final String nameLine = String.valueOf(lui) + " " + this.shortName() + "\n";
-        StringBuilder studentPrint = new StringBuilder();
-        studentPrint.append(nameLine);
-        studentPrint.append(this.subjects.toString());
-        studentPrint.append("\n");
-        studentPrint.append(this.exams.toString());
-        studentPrint.append("=".repeat(60));
-        studentPrint.append("\n");
-        return studentPrint.toString();
-    }
+
 
     /**
      * Creates and returns a string representation of this student's basic state.
@@ -360,6 +350,91 @@ public class Student implements StreamManager, ManageableListItem {
         return studentPrint.toString();
     }
 
+    public void addUnit( Unit unit) {
+        this.units.add(unit);
+    }
+
+    public String getId() {
+        return this.lui.toString();
+    }
+
+
+    /**
+     * @param text - to be sanitised
+     */
+
+    public String sanitiseName(String text) {
+        if (text == null) return "";
+
+        // Step 1: Trim leading/trailing spaces
+        text = text.trim();
+
+        // Step 2: Split on any whitespace
+        String[] parts = text.split("\\s+");
+
+        // Step 3: Filter and keep only valid name parts
+        StringBuilder result = new StringBuilder();
+        for (String part : parts) {
+            if (part.matches("[a-zA-Z'-]+")) {
+                if (result.length() > 0) result.append(" ");
+                result.append(part);
+            }
+        }
+
+        return result.toString();
+    }
+
+
+    @Override
+    public Object[] toTableRow() {
+        return new Object[] {
+                lui.toString(),           // LUI as a string
+                family,                   // Family name
+                given,                    // Given names
+                dob.toString(),           // Date of birth
+                               // House color
+                aara,                     // AARA (Boolean)
+        };
+    }
+
+    /**
+     * Creates and returns a string representation of this student's detailed state.
+     *
+     * @return the string representation of this student's detailed state.
+     */
+    public String getFullDetail() {
+        // Line 1: nthItem. FULL NAME
+        StringBuilder total = new StringBuilder();
+
+
+        total.append(this.nthIndex).append(". ")
+                .append(given.toUpperCase()).append(" ")
+                .append(family.toUpperCase());
+        total.append("\n");
+
+        // Line 2: metadata
+
+        total.append("LUI: ").append(String.format("%010d", lui)).append(", ")
+                .append("Family Name: ").append(family).append(", ")
+                .append("Given Name(s): ").append(given).append(", ")
+                .append("Date of Birth: ").append(dob).append(", ")
+                .append("House: ").append(house).append(", ")
+                .append("AARA: ").append(aara);
+
+        total.append("\n");
+
+
+        total.append("Subjects: ");
+        for (int i = 0; i < subjects.all().size(); i++) {
+            total.append(subjects.all().get(i).getTitle());
+            if (i < subjects.all().size() - 1) {
+                total.append(", ");
+            }
+        }
+
+        total.append("\n");
+        return total.toString();
+    }
 
     /** /
      * 1. LIAM ALEXANDER SMITH
@@ -426,23 +501,23 @@ public class Student implements StreamManager, ManageableListItem {
             throws IOException,
             RuntimeException {
 
-            String heading = CSSE7023.getLine(br);
-            //  read the next non-blank, non-comment string from the reader and return trimmed string
-            if (heading == null) {
-                throw new RuntimeException("EOF reading Student #" + nthItem);
-            }
+        String heading = CSSE7023.getLine(br);
+        //  read the next non-blank, non-comment string from the reader and return trimmed string
+        if (heading == null) {
+            throw new RuntimeException("EOF reading Student #" + nthItem);
+        }
 
-            var bits = heading.split("\\. "); // split around the dot .
-            int index = CSSE7023.toInt(bits[0], "Number format exception parsing Room "
-                    + nthItem
-                    + " header");
+        var bits = heading.split("\\. "); // split around the dot .
+        int index = CSSE7023.toInt(bits[0], "Number format exception parsing Room "
+                + nthItem
+                + " header");
 
-            // sanity check
-            if (index != nthItem) {
-                throw new RuntimeException("Room index out of sync!");
-            }
+        // sanity check
+        if (index != nthItem) {
+            throw new RuntimeException("Room index out of sync!");
+        }
 
-                        // Second line: student metadata
+        // Second line: student metadata
         String line2 = CSSE7023.getLine(br);
         String[] parts = line2.split(",");
 
@@ -465,71 +540,32 @@ public class Student implements StreamManager, ManageableListItem {
         }
 
 
-            // Third line: subjects
-            String line3 = CSSE7023.getLine(br);
-            String subjectString = line3.substring("Subjects: ".length()).trim();
-            String[] subjectTitles = subjectString.split(",");
+        // Third line: subjects
+        String line3 = CSSE7023.getLine(br);
+        String subjectString = line3.substring("Subjects: ".length()).trim();
+        String[] subjectTitles = subjectString.split(",");
 
 
-            for (String title : subjectTitles) {
-                title = title.trim();
-                String potentialId = (title).trim().toLowerCase().replaceAll("[^a-z0-9]+", "_");
-                Subject subject = registry.get(potentialId, Subject.class);
-                // registry.get will throw an error if nothing found
-                this.subjects.add(subject);
-
-            }
-
+        for (String title : subjectTitles) {
+            title = title.trim();
+            String potentialId = (title).trim().toLowerCase().replaceAll("[^a-z0-9]+", "_");
+            Subject subject = registry.get(potentialId, Subject.class);
+            // registry.get will throw an error if nothing found
+            this.subjects.add(subject);
 
         }
 
-    public void addUnit( Unit unit) {
-        this.units.add(unit);
+
     }
-
-    public String getId() {
-        return this.lui.toString();
-    }
-
-
-    /**
-     * @param text - to be sanitised
-     */
-
-    public String sanitiseName(String text) {
-        if (text == null) return "";
-
-        // Step 1: Trim leading/trailing spaces
-        text = text.trim();
-
-        // Step 2: Split on any whitespace
-        String[] parts = text.split("\\s+");
-
-        // Step 3: Filter and keep only valid name parts
-        StringBuilder result = new StringBuilder();
-        for (String part : parts) {
-            if (part.matches("[a-zA-Z'-]+")) {
-                if (result.length() > 0) result.append(" ");
-                result.append(part);
-            }
-        }
-
-        return result.toString();
-    }
-
 
     @Override
-    public Object[] toTableRow() {
-        return new Object[] {
-                lui.toString(),           // LUI as a string
-                family,                   // Family name
-                given,                    // Given names
-                dob.toString(),           // Date of birth
-                house,                    // House color
-                aara,                     // AARA (Boolean)
-                subjects.all().size()           // Number of subjects
-        };
+    public boolean equals(Object o) {
+        if (!(o instanceof Student student)) return false;
+        return nthIndex == student.nthIndex && Objects.equals(getLui(), student.getLui()) && Objects.equals(given, student.given) && Objects.equals(family, student.family) && Objects.equals(getDob(), student.getDob()) && Objects.equals(getHouse(), student.getHouse()) && Objects.equals(aara, student.aara) && Objects.equals(getSubjects(), student.getSubjects()) && Objects.equals(units, student.units) && Objects.equals(getExams(), student.getExams()) && Objects.equals(getId(), student.getId()) && Objects.equals(registry, student.registry);
     }
 
-
+    @Override
+    public int hashCode() {
+        return Objects.hash(getLui(), given, family, getDob(), getHouse(), aara, getSubjects(), units, getExams(), getId(), registry, nthIndex);
+    }
 }

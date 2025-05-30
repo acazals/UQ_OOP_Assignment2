@@ -8,9 +8,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -21,7 +19,7 @@ import java.util.stream.Collectors;
  * That is, a new session may be inserted earlier into an existing schedule.
  * Session numbers do not have to necessarily be sequential.
  */
-public class Session extends Object implements StreamManager, ManageableListItem {
+public class Session implements StreamManager, ManageableListItem {
 
     /**
      * Version 1.3: added field studentCount as work-around for bug in Assignment 1
@@ -67,6 +65,8 @@ public class Session extends Object implements StreamManager, ManageableListItem
 
     private ArrayList<Desk> basicDesk;
 
+    private Registry registry;
+
     /**
      * Constructs a new empty {@link Exam} {@code Session} for a particular {@link Venue}.
      * The calling process must check that the supplied session number is unique for this venue.
@@ -92,11 +92,13 @@ public class Session extends Object implements StreamManager, ManageableListItem
         desks = new Desk[rows][columns]; // Initialize 2D array
         initializeDesks();  // Fill matrix with Desk objects
 
+        this.registry = registry;
         registry.add(this, Session.class);
     }
 
-    public Session(BufferedReader br, Registry registry, int nthItem) {
+    public Session(BufferedReader br, Registry registry, int nthItem) throws  IOException {
         this.streamIn(br, registry, nthItem);
+        this.registry = registry;
         registry.add(this, Session.class);
     }
 
@@ -178,10 +180,18 @@ public class Session extends Object implements StreamManager, ManageableListItem
      * Version 1.3: added parameter numberStudents as work-around for bug in Assignment 1
      *
      * @param exam           the exam to be allocated to this venue.
-     * @param numberStudents the number of students being added with this allocation.
+     * in the code : nbStudent =  the number of students being added with this allocation.
      */
-    public void scheduleExam(Exam exam, int numberStudents) {
-        studentCount += numberStudents;
+    public void scheduleExam(Exam exam) {
+        // now we are going to get the number of STudents through the registry
+        int nbSTudent =0;
+        List<Student> allStudents = this.registry.getAll(Student.class);
+        for (Student mySTudent : allStudents) {
+            if (mySTudent.getExams().all().contains(exam)) {
+                nbSTudent +=1;
+            }
+        }
+        studentCount += nbSTudent;
         exams.add(exam);
     }
 
@@ -235,8 +245,11 @@ public class Session extends Object implements StreamManager, ManageableListItem
                                 j = (nextDesk - 1) / rows;
                                 i = (nextDesk - 1) % rows;
                                 String givenAndInit = getGivenAndInit(student.givenNames());
-                                desks[i][j].setFamilyName(student.familyName());
-                                desks[i][j].setGivenAndInit(givenAndInit);
+                                // setFamilyName is now deleted
+                                // we use setStudent
+                                desks[i][j].setStudent(student);
+//                                desks[i][j].setFamilyName(student.familyName());
+//                                desks[i][j].setGivenAndInit(givenAndInit);
                                 finishDesk = nextDesk;
                                 if (skipColumns) {
                                     if (nextDesk % rows == 0) {
@@ -353,6 +366,17 @@ public class Session extends Object implements StreamManager, ManageableListItem
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Session session)) return false;
+        return studentCount == session.studentCount && getSessionNumber() == session.getSessionNumber() && rows == session.rows && columns == session.columns && totalDesks == session.totalDesks && Objects.equals(getVenue(), session.getVenue()) && Objects.equals(day, session.day) && Objects.equals(start, session.start) && Objects.equals(getExams(), session.getExams()) && Objects.deepEquals(desks, session.desks) && Objects.equals(basicDesk, session.basicDesk) && Objects.equals(registry, session.registry);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(studentCount, getVenue(), getSessionNumber(), day, start, getExams(), rows, columns, totalDesks, Arrays.deepHashCode(desks), basicDesk, registry);
+    }
+
+    @Override
     public void streamIn(BufferedReader br, Registry registry, int nthItem) throws IOException,
             RuntimeException {
 
@@ -362,6 +386,11 @@ public class Session extends Object implements StreamManager, ManageableListItem
     public void streamOut(BufferedWriter bw, int nthItem) throws IOException
     {
 
+    }
+
+    @Override
+    public String getFullDetail() {
+        return "test";
     }
 }
 

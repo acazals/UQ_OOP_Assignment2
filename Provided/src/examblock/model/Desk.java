@@ -65,18 +65,13 @@ public class Desk {
      */
     public String deskGivenAndInit() {
         return givenAndInit;
+    } // to be deleted
+
+    public void setGivenAndInit( String myStr) {
+        this.givenAndInit = myStr;
     }
 
-    /**
-     * Sets the first given name and initial of the student assigned to this desk.
-     *
-     * @param givenAndInit a single string with the first given name, a space,
-     *                     the initial of first middle name, if any, with a full stop
-     *                     after the initial (if present) of the student assigned.
-     */
-    public void setGivenAndInit(String givenAndInit) {
-        this.givenAndInit = givenAndInit; // Note: does no enforcement of requirements
-    }
+
 
     /**
      * Returns a string representation of this desk.
@@ -96,11 +91,11 @@ public class Desk {
         return "Desk: " + id + " " + assignedStudent;
     }
 
-    private void setExam( Exam exam) {
+    public void setExam( Exam exam) {
         this.Exam = exam;
     }
 
-    private String deskExam() {
+    public String deskExam() {
         return this.Exam.getTitle();
     }
 
@@ -108,9 +103,16 @@ public class Desk {
         return "";
     }
 
+    public long deskLui() {
+        return this.LUI;
+    }
+
     public void setStudent(Student student) {
         this.student = student;
+        this.familyName = student.familyName();
+        this.givenAndInit = student.givenNames();
     }
+
 
     public void streamOut(BufferedWriter bw) throws IOException {
         // Format: id|familyName|givenAndInit
@@ -120,6 +122,7 @@ public class Desk {
         bw.write(line);
         bw.newLine(); // write line break
     }
+
 
     public void streamIn(BufferedReader br, String examName) throws IOException {
         // Format: id|familyName|givenAndInit

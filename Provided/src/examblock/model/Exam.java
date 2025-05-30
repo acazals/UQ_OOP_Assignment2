@@ -40,6 +40,7 @@ public class Exam implements StreamManager, ManageableListItem{
     /** ID */
     private String id;
 
+    private Registry registry;
 
     /**
      * Generates a unique ID for the exam : based on subject and date
@@ -196,6 +197,7 @@ public class Exam implements StreamManager, ManageableListItem{
             throws IOException,
             RuntimeException {
         this.streamIn(br, registry, nthItem);
+        this.registry = registry;
         registry.add(this, Exam.class);
     }
 
@@ -276,14 +278,7 @@ public class Exam implements StreamManager, ManageableListItem{
         return examTime;
     }
 
-    /**
-     * Returns a detailed string representation of this exam.
-     *
-     * @return a detailed string representation of this exam.
-     */
-    public String getFullDetail() {
-        return this.getSubject().toString().toUpperCase() + "\n" + this.getTitle();
-    }
+
 
     /**
      * Returns a brief string representation of the exam.
@@ -311,6 +306,37 @@ public class Exam implements StreamManager, ManageableListItem{
     //4. Year 12 Internal Assessment General Mathematics
     //Subject: General Mathematics, Exam Type: INTERNAL, Unit: 3, Exam Date: 2025-03-11 08:30
 
+
+    /**
+     * Returns a detailed string representation of this exam.
+     *
+     * @return a detailed string representation of this exam.
+     */
+    // nth Item : registry.all (exam)
+    // get the index of our exam instance in the list
+    // as looping
+    @Override
+    public String getFullDetail() {
+        StringBuilder total = new StringBuilder();
+        total.append(1).append(this.getShortTitle());
+        total.append("\n");
+        total.append("Subject: ").append(this.getSubject().getTitle()).append(" , Exam Type:").append(this.examType).append(", ");
+
+        if (this.paper != null && this.subtitle != null) {
+            total.append("Paper: ").append(this.paper);
+            //bw.newLine();
+            total.append("Subtitle: ").append(this.subtitle);
+            //bw.newLine();
+        } else {
+            total.append("Unit: ").append(this.unit);
+        }
+        if (this.examDate != null && this.examTime != null) {
+            total.append("Exam Date: ").append(this.examDate.toString()).append(" ").append(this.examTime.toString());
+            total.append("\n");
+        }
+
+        return total.toString();
+    }
     /**
      * @param bw :  writer, already opened. Your data should be written at the current file position
      * @param nthItem - a number representing this item's position in the stream. Used for sanity checks
@@ -427,31 +453,53 @@ public class Exam implements StreamManager, ManageableListItem{
                 examType,
                 unit,
                 examDate,
-                examTime
+                examTime,
+                this.countAARA(),
+                this.countNonAARA()
         };
     }
 
     public Object[] toLongTableRow() {
         return new Object[] {
+                this.examType,
                 subject.getTitle(),
-                examType,
-                paper != null ? paper : "",
-                subtitle != null ? subtitle : "",
-                unit,
                 examDate,
                 examTime,
-                getId()
+
         };
     }
 
-    /**
-     * Returns a brief string representation of the exam.
-     *
-     * @return a brief string representation of the exam.
-     */
+    private int countAARA() {
+        int count =0;
+        for ( Student myStudent : this.registry.getAll(Student.class) ) {
+            if (myStudent.getSubjects().getItems().contains(this.subject) && myStudent.isAara()) {
+                count++;
+            }
+        }
+        return count;
+    }
 
+    private int countNonAARA() {
+        int count =0;
+        for ( Student myStudent : this.registry.getAll(Student.class) ) {
+            if (myStudent.getSubjects().getItems().contains(this.subject) && myStudent.isAara()) {
+                count++;
+            }
+        }
+        return count;
+    }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Exam exam = (Exam) o;
+        return Objects.equals(getSubject(), exam.getSubject()) && examType == exam.examType && Objects.equals(paper, exam.paper) && Objects.equals(subtitle, exam.subtitle) && Objects.equals(unit, exam.unit) && Objects.equals(examDate, exam.examDate) && Objects.equals(examTime, exam.examTime) && Objects.equals(getId(), exam.getId());
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(getSubject(), examType, paper, subtitle, unit, examDate, examTime, getId());
+    }
 }
 
 

@@ -61,80 +61,7 @@ public class Room implements StreamManager, ManageableListItem {
         registry.add(this, Room.class);
     }
 
-    /**
-     * Used to write data to the disk.<br>
-     * <br>
-     * The format of the text written to the stream must be matched exactly by streamIn, so it
-     * is very important to format the output as described.<br>
-     * <br>
-     * 3. R3<br>
-     * 4. S101<br>
-     * <br>
-     *
-     * @param bw      writer, already opened. Your data should be written at the current
-     *                file position
-     * @param nthItem a number representing this item's position in the stream. Used for sanity
-     *                checks
-     * @throws IOException on any stream related issues
-     */
-    @Override
-    public void streamOut(BufferedWriter bw, int nthItem) throws IOException {
-        bw.write(nthItem + ". " + this.id);
-    }
 
-    /**
-     * Used to read data from the disk. IOExceptions and RuntimeExceptions must be allowed
-     * to propagate out to the calling method, which co-ordinates the streaming. Any other
-     * exceptions should be converted to RuntimeExceptions and rethrown.<br>
-     * <br>
-     * For the format of the text in the input stream, refer to the {@code streamOut} documentation.
-     *
-     * @param br       reader, already opened.
-     * @param registry the global object registry
-     * @param nthItem  a number representing this item's position in the stream. Used for sanity
-     *                 checks
-     * @throws IOException      on any stream related issues
-     * @throws RuntimeException on any logic related issues
-     */
-    @Override
-    public void streamIn(BufferedReader br,
-                         Registry registry,
-                         int nthItem)
-            throws IOException, RuntimeException {
-
-        //    1. R1
-
-        String heading = CSSE7023.getLine(br);
-        //  read the next non-blank, non-comment string from the reader and return trimmed string
-        if (heading == null) {
-            throw new RuntimeException("EOF reading Room #" + nthItem);
-        }
-
-        var bits = heading.split("\\. "); // split around the dot .
-        int index = CSSE7023.toInt(bits[0], "Number format exception parsing Room "
-                + nthItem
-                + " header");
-
-        // sanity check
-        if (index != nthItem) {
-            throw new RuntimeException("Room index out of sync!");
-        }
-
-        id = bits[1];
-
-        if (Verbose.isVerbose()) {
-            System.out.println("Loaded Room: " + id);
-        }
-    }
-
-    /**
-     * Returns a detailed string representation of this exam
-     *
-     * @return a detailed string representation of this exam.
-     */
-    public String getFullDetail() {
-        return toString();
-    }
 
     /**
      * return an Object[] containing class values suitable for use in the view model
@@ -211,5 +138,81 @@ public class Room implements StreamManager, ManageableListItem {
     @Override
     public int hashCode() {
         return this.id.hashCode();
+    }
+
+    /**
+     * Returns a detailed string representation of this exam
+     *
+     * @return a detailed string representation of this exam.
+     */
+    @Override
+    public String getFullDetail() {
+        return 1 + ". " + this.id;
+    }
+
+    /**
+     * Used to write data to the disk.<br>
+     * <br>
+     * The format of the text written to the stream must be matched exactly by streamIn, so it
+     * is very important to format the output as described.<br>
+     * <br>
+     * 3. R3<br>
+     * 4. S101<br>
+     * <br>
+     *
+     * @param bw      writer, already opened. Your data should be written at the current
+     *                file position
+     * @param nthItem a number representing this item's position in the stream. Used for sanity
+     *                checks
+     * @throws IOException on any stream related issues
+     */
+    @Override
+    public void streamOut(BufferedWriter bw, int nthItem) throws IOException {
+        bw.write(nthItem + ". " + this.id);
+    }
+
+    /**
+     * Used to read data from the disk. IOExceptions and RuntimeExceptions must be allowed
+     * to propagate out to the calling method, which co-ordinates the streaming. Any other
+     * exceptions should be converted to RuntimeExceptions and rethrown.<br>
+     * <br>
+     * For the format of the text in the input stream, refer to the {@code streamOut} documentation.
+     *
+     * @param br       reader, already opened.
+     * @param registry the global object registry
+     * @param nthItem  a number representing this item's position in the stream. Used for sanity
+     *                 checks
+     * @throws IOException      on any stream related issues
+     * @throws RuntimeException on any logic related issues
+     */
+    @Override
+    public void streamIn(BufferedReader br,
+                         Registry registry,
+                         int nthItem)
+            throws IOException, RuntimeException {
+
+        //    1. R1
+
+        String heading = CSSE7023.getLine(br);
+        //  read the next non-blank, non-comment string from the reader and return trimmed string
+        if (heading == null) {
+            throw new RuntimeException("EOF reading Room #" + nthItem);
+        }
+
+        var bits = heading.split("\\. "); // split around the dot .
+        int index = CSSE7023.toInt(bits[0], "Number format exception parsing Room "
+                + nthItem
+                + " header");
+
+        // sanity check
+        if (index != nthItem) {
+            throw new RuntimeException("Room index out of sync!");
+        }
+
+        id = bits[1];
+
+        if (Verbose.isVerbose()) {
+            System.out.println("Loaded Room: " + id);
+        }
     }
 }

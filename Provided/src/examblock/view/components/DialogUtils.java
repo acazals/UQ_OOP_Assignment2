@@ -4,6 +4,7 @@ import examblock.model.CSSE7023;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.FileWriter;
 import java.io.IOException;
 
 
@@ -85,8 +86,8 @@ public class DialogUtils {
             FileChooser dialog = new FileChooser();
             String selectedFile = dialog.save(null, fileType);
             if (!selectedFile.isEmpty()) {
-                try {
-                    //(Write the text passed in to us to selectedFile)
+                try (FileWriter writer = new FileWriter(selectedFile)) {
+                    writer.write(text);
                 } catch (IOException ex) {
                     //(Let the caller know the save failed)
                 }
@@ -103,14 +104,12 @@ public class DialogUtils {
         });
         viewMenu.add(wrapTextItem);
         menuBar.add(viewMenu);
-// Create JDialog
-        JDialog dialog = new JDialog(parent == null
-                ? null
-                : SwingUtilities.getWindowAncestor(parent), title);
+        // Create JDialog
+        JDialog dialog = new JDialog(parentComponent == null ? null : SwingUtilities.getWindowAncestor(parentComponent), title);
         dialog.setJMenuBar(menuBar);
         dialog.add(scrollPane, BorderLayout.CENTER);
         dialog.pack();
-        dialog.setLocationRelativeTo(parent);
+        dialog.setLocationRelativeTo(parentComponent);
         dialog.setModal(true);
         dialog.setVisible(true);
     }

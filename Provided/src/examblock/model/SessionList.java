@@ -179,7 +179,7 @@ public class SessionList extends ListManager<Session> {
         // see if there is already a session set up in that venue at that time.
         Session session; // Local variables for handling the exam session checks.
         int sessionNumber = this.getSessionNumber(venue, day, start);
-        if (sessionNumber == 0) {
+        if (sessionNumber == 0) { // if 0 no session already existing in that venue at that time
             System.out.println("There is currently no exam session in that venue at that time.");
             System.out.println("Creating a session...");
             session = new Session(venue, getNextSessionNumber(venue), day, start, this.getRegistry());
@@ -211,6 +211,18 @@ public class SessionList extends ListManager<Session> {
         return nextSessionNumber;
     }
 
+    public int getExistingSessionTotal(Venue venue, Exam exam) {
+        for (Session session : this.getItems()) {
+            if (session.getVenue().venueId().equals(venue.venueId())
+                    && session.getDate().equals(exam.getDate()) && session.getTime().equals(exam.getTime())) {
+                // then this is the right session
+                return session.countStudents();
+            }
+
+            }
+        return 0;
+    }
+
     /**
      * Allocates an exam to an existing session (Venue and time).
      * Prints "(the title of the subject) exam added to the Identifier of the venue."
@@ -220,15 +232,16 @@ public class SessionList extends ListManager<Session> {
      *
      * @param venue the exam venue for the new session.
      * @param exam the exam to be allocated to this venue.
-     * @param numberStudents the number of students being added with this allocation.
+     * // before param :  numberStudents the number of students being added with this allocation.
+     * // now found through the registry
      */
-    public void scheduleExam(Venue venue, Exam exam, int numberStudents) {
+    public void scheduleExam(Venue venue, Exam exam) {
         Subject subject = exam.getSubject();
         LocalDate day = exam.getDate();
         LocalTime start = exam.getTime();
         int sessionNumber = this.getSessionNumber(venue, day, start);
         Session session = this.getSession(venue, sessionNumber);
-        session.scheduleExam(exam, numberStudents);
+        session.scheduleExam(exam);
         System.out.println(subject.getTitle() + " exam added to " + venue.venueId() + ".");
     }
 
@@ -240,7 +253,7 @@ public class SessionList extends ListManager<Session> {
      * @return A new list holding {@code references} to all the sessions in this  sessionList.
      */
     public List<Session> forVenue(Venue venue) {
-        List<Session> sessionList = new ArrayList<Session>();
+        List<Session> sessionList = new ArrayList<Session>(); // sessions taking place in that venue
         for (Session session : this.getItems()) {
             if (session.getVenue().venueId().equals(venue.venueId())) {
                 sessionList.add(session);
