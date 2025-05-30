@@ -574,6 +574,7 @@ public class Session implements StreamManager, ManageableListItem {
             this.nthItem = nthItem;
 
             int examCount = this.ParseMetaData(bits[1], registry); // also registers the metadata
+            int examScheduled = 0;
             line = CSSE7023.getLine(br);
 
 
@@ -593,7 +594,7 @@ public class Session implements StreamManager, ManageableListItem {
                         Desk myDesk = this.parseDeskLine(line);
                         System.out.println(myDesk.toString());
                         this.basicDesk.add(myDesk);
-                        if (i == deskCount -1 && this.exams.all().size() == examCount) {
+                        if (i == deskCount -1 && examScheduled == examCount) {
                             // then last desk for the last exam
                             // we keep that line
                             break outer;
@@ -618,6 +619,7 @@ public class Session implements StreamManager, ManageableListItem {
                     // then we are over to a new exam
                     Exam myExam = parseExam(line);
                     this.scheduleExam(myExam);
+                    examScheduled+=1;
                     System.out.println("JUST ADDED EXAM " + myExam);
                     line = CSSE7023.getLine(br);
                 }

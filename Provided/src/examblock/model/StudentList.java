@@ -16,6 +16,9 @@ public class StudentList extends ListManager<Student> {
      */
     public StudentList(Registry registry){
         super(Student::new, registry, Student.class);
+        for (Student myStudent : registry.getAll(Student.class)) {
+            this.add(myStudent);
+        }
     }
 
     @Override

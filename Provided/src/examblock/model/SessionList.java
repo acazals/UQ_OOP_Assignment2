@@ -18,6 +18,9 @@ public class SessionList extends ListManager<Session> {
     public SessionList(Registry registry) {
 
         super(Session::new, registry, Session.class);
+        for (Session mySesh : registry.getAll(Session.class)) {
+            this.add(mySesh);
+        }
     }
 
     /**

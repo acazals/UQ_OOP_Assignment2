@@ -26,7 +26,11 @@ public class ExamList extends ListManager<Exam> {
 //    }
 
     public ExamList( Registry registry) {
+
         super(Exam::new, registry, Exam.class);
+        for (Exam myExam : registry.getAll(Exam.class)) {
+            this.add(myExam);
+        }
     }
 
     /**
