@@ -25,10 +25,10 @@ public class ExamBlockController {
     public ExamBlockController() {
 
         ExamBlockModel model = new ExamBlockModel();
-        ExamBlockView view = new ExamBlockView(model.getRegistry());
+
         model.loadFromFile(model.getRegistry(), "C:\\Users\\PePeW\\OneDrive\\Bureau\\CAZALS\\UQ_OOP_Assignment2-main\\UQ_OOP_Assignment2-main\\Provided\\examblock.ebd");
         // now we have all the data in the registry
-
+        ExamBlockView view = new ExamBlockView(model.getRegistry());
         model.addObserver(view); // register the view as an observer
 
         view.addClearButtonListener(e -> clearButtonClicked());
