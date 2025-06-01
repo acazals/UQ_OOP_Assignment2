@@ -8,9 +8,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
 
 
@@ -20,14 +18,16 @@ public class ExamBlockView implements ModelObserver {
     private JButton clearButton;
     private JButton finaliseButton;
 
-
-    private HashMap<Integer, Exam> examMap;
-
+    private Map<Integer, Exam> examMap; // flat map for all exams used for the add button
     // DefaultMutableTreeNode represents a single node in a JTree.
     // It can store any object and have children, making it suitable for building flexible trees
     private HashMap<DefaultMutableTreeNode, Session> sessionNodeMap;
     private HashMap<DefaultMutableTreeNode, Venue> venueNodeMap;
     private HashMap<DefaultMutableTreeNode, Exam> examNodeMap;
+
+    private DefaultMutableTreeNode rootNode;
+    private DefaultMutableTreeNode existingSessionsNode;
+    private DefaultMutableTreeNode newSessionNode;
 
     private JPanel BottomPanel;
     private JPanel TopPanel;
@@ -103,6 +103,12 @@ public class ExamBlockView implements ModelObserver {
     public ExamBlockView(Registry registry) {
 
         this.registry = registry;
+        this.examMap = new HashMap<>();
+        sessionNodeMap = new HashMap<>();
+        venueNodeMap = new HashMap<>();
+        examNodeMap = new HashMap<>();
+
+        this.initializeTree();
 
 
 
@@ -110,15 +116,8 @@ public class ExamBlockView implements ModelObserver {
         this.myVenues = new VenueList(registry); // empty here
         List<Venue> VenueList = (registry.getAll(Venue.class)); // get the list
         ArrayList<Venue> VenueArrayList = new ArrayList<>(VenueList); // make it an arrayList
-
         this.myVenues.addAll(VenueArrayList); // add all the existing venues
         this.updateVenuePage(myVenues);
-       /**
-        *  for (Venue v : myVenues.all()) {
-        *             System.out.println(v.getFullDetail());
-        *         } */
-
-
 
         this.myExams = new ExamList(registry);
         List<Exam> ExamList = (registry.getAll(Exam.class)); // get the list
@@ -157,23 +156,23 @@ public class ExamBlockView implements ModelObserver {
         this.updateSessionTable(mySessions);
 
 
-
         Frame = this.CreateFrame();
-
-        sessionTree = new JTree();
-        sessionTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION); // make this a selectionnable tree
-
-        examMap = new HashMap<>();
-        sessionNodeMap = new HashMap<>();
-        venueNodeMap = new HashMap<>();
-        examNodeMap = new HashMap<>();
-
-
-
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Sessions");
-        sessionTree = new JTree(root);
-
         tabbedPane = new JTabbedPane();
+
+        this.TopPanel = this.createTopPanel();
+        this.BottomPanel = this.createBottomPanel();
+
+        ExamTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                System.out.println("ExamTable selection changed: " + Arrays.toString(getSelectedExamRows()));
+                updateAddButtonState();
+            }
+        });
+
+        sessionTree.addTreeSelectionListener(e -> updateAddButtonState());
+
+        // Initialise add button state
+        //updateAddButtonState();
 
 
     }
@@ -193,6 +192,7 @@ public class ExamBlockView implements ModelObserver {
     public void addExamToExamMap(int index, Exam exam) {
         examMap.put(index, exam);
     }
+
 
     public void addSessionToSessionNodeMap(DefaultMutableTreeNode sessionNode, Session session) {
         sessionNodeMap.put(sessionNode, session);
@@ -307,7 +307,7 @@ public class ExamBlockView implements ModelObserver {
 
 
     public int[] getSelectedExamRows() {
-        int[] selectedRows = ExamTable.getSelectedRows();
+        int[] selectedRows = this.ExamTableSelection.getSelectedRows();
         return selectedRows.length == 0 ? null : selectedRows;
     }
 
@@ -363,8 +363,8 @@ public class ExamBlockView implements ModelObserver {
 
 
         // Create a vertical split pane (top & bottom)
-        this.TopPanel = this.createTopPanel();
-        this.BottomPanel = this.createBottomPanel();
+
+
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, this.TopPanel, this.BottomPanel);
         splitPane.setDividerLocation(this.Frame.getHeight() / 2); // Start with equal split
         splitPane.setResizeWeight(0.5); // Keep halves balanced on resize
@@ -395,10 +395,6 @@ public class ExamBlockView implements ModelObserver {
             sessionTree.repaint();
         }
 
-//        // Optionally : should we  reset tab to first one??
-//        if (tabbedPane != null) {
-//            tabbedPane.setSelectedIndex(0); // Optional
-//        }
     }
 
     // checking if all exams have desks
@@ -548,49 +544,122 @@ public class ExamBlockView implements ModelObserver {
         }
     }
 
-    public void updateTree(SessionList sessions, VenueList venues) {
-        // === Root node: "Sessions"
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Sessions");
+    private int getSessionIndexInTree(Session session) {
+        DefaultMutableTreeNode root = (DefaultMutableTreeNode) sessionTree.getModel().getRoot();
 
-        // === Existing Sessions node
-        DefaultMutableTreeNode existingSessionsNode =
-                new DefaultMutableTreeNode("Existing Sessions (" + sessions.size() + ")");
+        if (root == null) return -1;
 
-        for (Session session : sessions.all()) {
-            String sessionLabel = "Session " + session.getId()
-                    + " (" + session.getDate() + " " + session.getTime() + ")";
-            DefaultMutableTreeNode sessionNode = new DefaultMutableTreeNode(sessionLabel);
-            sessionNode.setUserObject(session); // Attach session object for future selection
+        // Find the "Existing Sessions" node
+        Enumeration<TreeNode> children = root.children();
+        while (children.hasMoreElements()) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) children.nextElement();
+            if (node.toString().startsWith("Existing Sessions")) {
 
-            // Exams folder for that session
-            ArrayList<Exam> exams = (ArrayList<Exam>) session.getExams();
-            DefaultMutableTreeNode examsNode = new DefaultMutableTreeNode("Exams (" + exams.size() + ")");
-            for (Exam exam : exams) {
-                DefaultMutableTreeNode examNode = new DefaultMutableTreeNode("Exam: " + exam.getTitle());
-                examNode.setUserObject(exam);
-                examsNode.add(examNode);
+                // Loop over children of Existing Sessions (i.e., the session nodes)
+                for (int i = 0; i < node.getChildCount(); i++) {
+                    DefaultMutableTreeNode sessionNode = (DefaultMutableTreeNode) node.getChildAt(i);
+                    Object obj = sessionNode.getUserObject();
+                    if (obj instanceof Session s && s.equals(session)) {
+                        return i;
+                    }
+                }
             }
-
-            sessionNode.add(examsNode);
-            existingSessionsNode.add(sessionNode);
         }
 
-        // === "Create a New Session" node
-        DefaultMutableTreeNode newSessionNode = new DefaultMutableTreeNode("Create a New Session");
+        return -1; // Not found
+    }
+
+
+    private void initializeTree() {
+        // Clear node maps if needed
+        sessionNodeMap.clear();
+        venueNodeMap.clear();
+        examNodeMap.clear();
+
+        // === Root node ===
+        rootNode = new DefaultMutableTreeNode("Sessions");
+
+        // === Existing Sessions node ===
+        existingSessionsNode = new DefaultMutableTreeNode("Existing Sessions (0)");
+        rootNode.add(existingSessionsNode);
+
+        // === New Session node ===
+        newSessionNode = new DefaultMutableTreeNode("Create a New Session");
+        rootNode.add(newSessionNode);
+
+        // === Initialize JTree ===
+        sessionTree = new JTree(rootNode);
+        sessionTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+
+        // Set initial model
+        DefaultTreeModel model = new DefaultTreeModel(rootNode);
+        sessionTree.setModel(model);
+        sessionTree.updateUI();
+    }
+
+
+    public void updateTree(SessionList sessions, VenueList venues) {
+        if (rootNode == null || existingSessionsNode == null || newSessionNode == null) {
+            initializeTree();
+        }
+
+        //  new session node
+        newSessionNode.removeAllChildren();
         for (Venue venue : venues.all()) {
-            String venueLabel = "Venue " + venue.getId() + " (" + venue.deskCount() + " desks)";
-            DefaultMutableTreeNode venueNode = new DefaultMutableTreeNode(venueLabel);
-            venueNode.setUserObject(venue); // Attach venue object for later use
+            String label = "Venue " + venue.getId() + " (" + venue.deskCount() + " desks)" + "AARA :"+ venue.isAara();
+            DefaultMutableTreeNode venueNode = new DefaultMutableTreeNode(label);
+            venueNode.setUserObject(venue);
+            venueNodeMap.put(venueNode, venue);
             newSessionNode.add(venueNode);
         }
 
-        // === Assemble the final tree
-        root.add(existingSessionsNode);
-        root.add(newSessionNode);
+        // Update only new or modified sessions
+        for (Session session : sessions.all()) {
+            boolean sessionExists = false;
+            Enumeration<TreeNode> children = existingSessionsNode.children();
+            while (children.hasMoreElements()) {
+                DefaultMutableTreeNode child = (DefaultMutableTreeNode) children.nextElement();
+                Object obj = child.getUserObject();
+                if (obj instanceof Session existingSession && existingSession.getId().equals(session.getId())) {
+                    sessionExists = true;
+                    // Optionally: update label and exams if needed
+                    child.setUserObject(session);
+                    child.removeAllChildren();
 
-        // === Update tree model
-        DefaultTreeModel model = new DefaultTreeModel(root);
-        this.getTree().setModel(model);
+                    ArrayList<Exam> exams = (ArrayList<Exam>) session.getExams();
+                    DefaultMutableTreeNode examsNode = new DefaultMutableTreeNode("Exams (" + exams.size() + ")");
+                    for (Exam exam : exams) {
+                        DefaultMutableTreeNode examNode = new DefaultMutableTreeNode("Exam: " + exam.getTitle());
+                        examNode.setUserObject(exam);
+                        examsNode.add(examNode);
+                        examNodeMap.put(examNode, exam);
+                    }
+                    child.add(examsNode);
+                    break;
+                }
+            }
+
+            if (!sessionExists) {
+                // Create a new session node
+                String label = "Session " + session.getId() + " (" + session.getDate() + " " + session.getTime() + ")";
+                DefaultMutableTreeNode sessionNode = new DefaultMutableTreeNode(label);
+                sessionNode.setUserObject(session);
+                sessionNodeMap.put(sessionNode, session);
+
+                ArrayList<Exam> exams = (ArrayList<Exam>) session.getExams();
+                DefaultMutableTreeNode examsNode = new DefaultMutableTreeNode("Exams (" + exams.size() + ")");
+                for (Exam exam : exams) {
+                    DefaultMutableTreeNode examNode = new DefaultMutableTreeNode("Exam: " + exam.getTitle());
+                    examNode.setUserObject(exam);
+                    examsNode.add(examNode);
+                    examNodeMap.put(examNode, exam);
+                }
+                sessionNode.add(examsNode);
+                existingSessionsNode.add(sessionNode);
+            }
+        }
+
+        existingSessionsNode.setUserObject("Existing Sessions (" + sessions.size() + ")");
         this.getTree().updateUI();
     }
 
@@ -598,6 +667,7 @@ public class ExamBlockView implements ModelObserver {
     private void handleAdd() {
         int examIndex = this.getSelectedExamRows()[0];
         Exam myExam = this.getExamFromExamMap(examIndex);
+        // index of the exam
         DefaultMutableTreeNode selected = this.getSelectedTreeNode();
         Object userObject = selected.getUserObject();
 
@@ -605,6 +675,25 @@ public class ExamBlockView implements ModelObserver {
             handleAddToExistingSession(session, myExam);
         } else if (userObject instanceof Venue venue) {
             handleCreateNewSession(venue, myExam);
+        }
+    }
+
+    private void updateAddButtonState() {
+        // Check if an exam is selected
+        boolean examSelected = getSelectedExamRows() != null && getSelectedExamRows().length > 0;
+
+        // Check if a valid tree node is selected (either a Session or Venue)
+        boolean treeValidSelection = false;
+        TreePath path = sessionTree.getSelectionPath();
+        if (path != null) {
+            DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) path.getLastPathComponent();
+            Object userObject = selectedNode.getUserObject();
+            treeValidSelection = (userObject instanceof Session || userObject instanceof Venue);
+        }
+
+        // Enable/disable the Add button accordingly
+        if (addButton != null) {
+            addButton.setEnabled(examSelected && treeValidSelection);
         }
     }
 
@@ -641,7 +730,12 @@ public class ExamBlockView implements ModelObserver {
     }
 
     public void updateExamPage ( ExamList exams) {
-
+        // we also need to add all the exams in the examMap for the left upper pannel
+        int j =0;
+        for ( Exam E : exams.all()) {
+            this.addExamToExamMap(j, E);
+            j++;
+        } // should be 14  different exams
         this.updateExamTable(this.myExams);
     }
 

@@ -32,9 +32,9 @@ public class ExamBlockController {
         //myModel.loadFromFile()// quicker way
         myModel.loadFromFile(model.getRegistry(), "C:\\Users\\PePeW\\OneDrive\\Bureau\\CAZALS\\UQ_OOP_Assignment2-main\\UQ_OOP_Assignment2-main\\Provided\\examblock.ebd");
         // now we have all the data in the registry
-        this.myView = new ExamBlockView(model.getRegistry());
+        this.myView = new ExamBlockView(model.getRegistry()); // creates top and bottom panel + tree
         model.addObserver(myView); // register the view as an observer
-        myView.updateTree(this.myModel.getSessions(), this.myModel.getVenues());
+        myView.updateTree(this.myModel.getSessions(), this.myModel.getVenues()); // updates the tree
         myView.display();
 
         myView.addClearButtonListener(e -> {
