@@ -1,5 +1,6 @@
 package examblock.model;
 
+import javax.swing.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -169,6 +170,50 @@ public class ExamBlockModel {
             return false;
         }
     }
+
+    public void loadFromFile() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Select ExamBlock Data File");
+
+        // permet que la sélection de fichiers, pas de dossiers
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+        int result = fileChooser.showOpenDialog(null); // tu peux remplacer null par ta JFrame si tu veux
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+
+            // check supplémentaire : le fichier est bien un fichier
+            if (!selectedFile.isFile()) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "The selected item is not a valid file.",
+                        "Invalid Selection",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
+            String filePath = selectedFile.getAbsolutePath();
+
+            try {
+                this.loadFromFile(this.getRegistry(), filePath); // ton vrai loader
+                System.out.println("Loaded from file: " + filePath);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Failed to load file:\n" + e.getMessage(),
+                        "Load Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("User cancelled file selection.");
+        }
+    }
+
+
 
     public void loadFromFile(Registry registry, String filename) {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {

@@ -464,9 +464,8 @@ public class Exam implements StreamManager, ManageableListItem{
     @Override
     public Object[] toTableRow() {
         return new Object[] {
-                subject.getTitle(),
                 examType,
-                unit,
+                subject.getTitle(),
                 examDate,
                 examTime,
                 this.countAARA(),
@@ -497,7 +496,7 @@ public class Exam implements StreamManager, ManageableListItem{
     private int countNonAARA() {
         int count =0;
         for ( Student myStudent : this.registry.getAll(Student.class) ) {
-            if (myStudent.getSubjects().getItems().contains(this.subject) && myStudent.isAara()) {
+            if (myStudent.getSubjects().getItems().contains(this.subject) && !myStudent.isAara()) {
                 count++;
             }
         }

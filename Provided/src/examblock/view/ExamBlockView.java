@@ -669,7 +669,7 @@ public class ExamBlockView implements ModelObserver {
         }
         ArrayList<Object[]> dataList = new ArrayList<>();
         for (Exam myExam : exams.all()) {
-            dataList.add(myExam.toLongTableRow()); // returns Object[]
+            dataList.add(myExam.toTableRow()); // returns Object[]
         }
 
         Object[][] dataExams = dataList.toArray(new Object[0][]);
