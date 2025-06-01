@@ -58,6 +58,7 @@ public class ExamBlockView implements ModelObserver {
     private VenueList myVenues;
     private UnitList myUnits;
     private ExamList myExams;
+    private SessionList mySessions;
 
     private JTable SubjectTable;
     private JTable StudentTable;
@@ -65,6 +66,7 @@ public class ExamBlockView implements ModelObserver {
     private JTable VenueTable;
     private JTable UnitTable;
     private JTable ExamTable;
+    private JTable SessionTable;
 
     private JTable ExamTableSelection;
 
@@ -108,23 +110,54 @@ public class ExamBlockView implements ModelObserver {
 
 
         // create all the Lists + update the JTables with empty data
-        this.myVenues = new VenueList(registry);
+        this.myVenues = new VenueList(registry); // empty here
+        List<Venue> VenueList = (registry.getAll(Venue.class)); // get the list
+        ArrayList<Venue> VenueArrayList = new ArrayList<>(VenueList); // make it an arrayList
+
+        this.myVenues.addAll(VenueArrayList); // add all the existing venues
         this.updateVenuePage(myVenues);
+       /**
+        *  for (Venue v : myVenues.all()) {
+        *             System.out.println(v.getFullDetail());
+        *         } */
+
+
 
         this.myExams = new ExamList(registry);
+        List<Exam> ExamList = (registry.getAll(Exam.class)); // get the list
+        ArrayList<Exam> ExamArrayList = new ArrayList<>(ExamList); // make it an arrayList
+        this.myExams.addAll(ExamArrayList); // add all the existing venues
         this.updateExamPage(myExams);
 
         this.myUnits = new UnitList(registry);
+        List<Unit> UNitList = (registry.getAll(Unit.class)); // get the list
+        ArrayList<Unit> UnitArrayList = new ArrayList<>(UNitList); // make it an arrayList
+        this.myUnits.addAll(UnitArrayList); // add all the existing venues
         this.updateUnitTable(myUnits);
 
         this.mySubjects = new SubjectList(registry);
+        List<Subject> SubjectList = (registry.getAll(Subject.class)); // get the list
+        ArrayList<Subject> SubjectArrayList = new ArrayList<>(SubjectList); // make it an arrayList
+        this.mySubjects.addAll(SubjectArrayList); // add all the existing venues
         this.updateSubjectTable(mySubjects);
 
         this.myRooms = new RoomList(registry);
+        List<Room> RoomList = (registry.getAll(Room.class)); // get the list
+        ArrayList<Room> RoomArrayList = new ArrayList<>(RoomList); // make it an arrayList
+        this.myRooms.addAll(RoomArrayList); // add all the existing venues
         this.updateRoomTable(myRooms);
 
         this.myStudents = new StudentList(registry);
+        List<Student> STudentList = (registry.getAll(Student.class)); // get the list
+        ArrayList<Student> StudentArrayList = new ArrayList<>(STudentList); // make it an arrayList
+        this.myStudents.addAll(StudentArrayList); // add all the existing venues
         this.updateStudentTable(myStudents);
+
+        this.mySessions  = new SessionList(registry);
+        List<Session> SessionList = (registry.getAll(Session.class)); // get the list
+        ArrayList<Session> SessionArrayList = new ArrayList<>(SessionList); // make it an arrayList
+        this.mySessions.addAll(SessionArrayList); // add all the existing venues
+        this.updateSessionTable(mySessions);
 
         this.TopPanel = this.createTopPanel();
         this.BottomPanel = this.createBottomPanel();
@@ -188,6 +221,8 @@ public class ExamBlockView implements ModelObserver {
         tabbedPane.add("Unit",new JScrollPane(this.UnitTable));
 
         tabbedPane.add("Students",new JScrollPane(this.StudentTable));
+
+        tabbedPane.add("Session",new JScrollPane(this.SessionTable));
 
         this.tabbedPane = tabbedPane;
         panel.add(tabbedPane, BorderLayout.CENTER);
@@ -546,28 +581,29 @@ public class ExamBlockView implements ModelObserver {
 
 
     public void updateVenuePage( VenueList venues) {
-        this.myVenues = venues;
-        this.updateVenueTable(venues);
+        System.out.println( " HERE ARE ALL THE VENUES IN THE REGISTRY");
+
+        this.updateVenueTable(this.myVenues);
     }
 
     public void updateExamPage ( ExamList exams) {
-        this.myExams = exams;
-        this.updateExamTable(exams);
+
+        this.updateExamTable(this.myExams);
     }
 
     public void updateStudentPage( StudentList students) {
-        this.myStudents = students;
-        this.updateStudentTable(students);
+
+        this.updateStudentTable(this.myStudents);
     }
 
     public void updateSubjectPage( SubjectList subjects) {
-        this.mySubjects = subjects;
-        this.updateSubjectTable(subjects);
+
+        this.updateSubjectTable(this.mySubjects);
     }
 
     public void updateUnitPage( UnitList units) {
-        this.myUnits = units;
-        this.updateUnitTable(units);
+
+        this.updateUnitTable(this.myUnits);
     }
 
 
@@ -605,7 +641,7 @@ public class ExamBlockView implements ModelObserver {
         }
         ArrayList<Object[]> dataList = new ArrayList<>();
         for (Subject mySubject : subjects.all()) {
-            dataList.add(mySubject.toLongTableRow()); // returns Object[]
+            dataList.add(mySubject.toTableRow()); // returns Object[]
         }
 
         Object[][] dataExams = dataList.toArray(new Object[0][]);
@@ -657,7 +693,8 @@ public class ExamBlockView implements ModelObserver {
         }
         ArrayList<Object[]> dataList = new ArrayList<>();
         for (Venue venue : venues.all()) {
-            dataList.add(venue.toLongTableRow());
+            System.out.println(venue.getFullDetail());
+            dataList.add(venue.toTableRow());
         }
 
         Object[][] dataVenues = dataList.toArray(new Object[0][]);
@@ -674,14 +711,31 @@ public class ExamBlockView implements ModelObserver {
         }
         ArrayList<Object[]> dataList = new ArrayList<>();
         for (Room room : rooms.all()) {
-            dataList.add(room.toLongTableRow());
+            dataList.add(room.toTableRow());
         }
 
         Object[][] dataRooms = dataList.toArray(new Object[0][]);
-        String[] columnNames = {"Room Code", "Capacity", "Type"}; // example, adapt as needed
+        String[] columnNames = {"Room Code"}; // example, adapt as needed
 
         DefaultTableModel model = new DefaultTableModel(dataRooms, columnNames);
         this.RoomTable.setModel(model);
+    }
+
+    private void updateSessionTable(SessionList mySessions) {
+
+        if (this.SessionTable == null) {
+            this.SessionTable = new JTable();
+        }
+        ArrayList<Object[]> dataList = new ArrayList<>();
+        for (Session sesh : mySessions.all()) {
+            dataList.add(sesh.toTableRow());
+        }
+
+        Object[][] dataSesh = dataList.toArray(new Object[0][]);
+        String[] columnNames = {"Venue ID ", "DATE"}; // adapt to your Unit columns
+
+        DefaultTableModel model = new DefaultTableModel(dataSesh, columnNames);
+        this.SessionTable.setModel(model);
     }
 
 

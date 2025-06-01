@@ -17,9 +17,7 @@ public class UnitList extends ListManager<Unit>
     public UnitList(Registry registry) {
 
         super(Unit::new, registry, Unit.class);
-        for (Unit myUnit : registry.getAll(Unit.class)) {
-            this.add(myUnit);
-        }
+
     }
 
 

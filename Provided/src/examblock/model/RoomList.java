@@ -21,9 +21,7 @@ public class RoomList extends ListManager<Room> {
     public RoomList(Registry registry) {
         //
         super(Room::new, registry, Room.class);
-        for (Room myRoom : registry.getAll(Room.class)) {
-            this.add(myRoom);
-        }
+
     }
 
     /**

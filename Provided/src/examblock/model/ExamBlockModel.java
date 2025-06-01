@@ -419,6 +419,14 @@ public class ExamBlockModel {
             e.printStackTrace();
             System.exit(1);
         }
+        for ( Venue myV : this.myRegistry.getAll(Venue.class)) {
+            System.out.print(" ");
+            System.out.print(myV.getId() + " ");
+        }
+        for ( Room R : this.myRegistry.getAll(Room.class)) {
+            System.out.print(" ");
+            System.out.print(R.getId() + " ");
+        }
     }
 
     private void UpdateALl() {

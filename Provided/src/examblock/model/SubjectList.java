@@ -16,9 +16,7 @@ public class SubjectList extends ListManager<Subject> {
     public SubjectList(Registry registry) {
 
         super(Subject::new, registry, Subject.class );
-        for (Subject mySubject : registry.getAll(Subject.class)) {
-            this.add(mySubject);
-        }
+
     }
 
 

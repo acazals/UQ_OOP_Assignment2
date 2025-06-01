@@ -15,9 +15,7 @@ public class VenueList extends ListManager<Venue> {
     public VenueList( Registry registry) {
 
         super(Venue::new, registry, Venue.class);
-        for (Venue myVenue : registry.getAll(Venue.class)) {
-            this.add(myVenue);
-        }
+
     }
 
     /**

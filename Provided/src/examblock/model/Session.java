@@ -94,6 +94,7 @@ public class Session implements StreamManager, ManageableListItem {
         this.day = day;
         this.start = start;
         this.exams = new ExamList(registry);
+        this.exams.clear();
         rows = venue.getRows();
         columns = venue.getColumns();
         totalDesks = venue.deskCount();
@@ -548,6 +549,7 @@ public class Session implements StreamManager, ManageableListItem {
             RuntimeException {
             this.registry = registry;
             this.exams = new ExamList(registry);
+            exams.clear(); // clearing all exams
             this.basicDesk = new ArrayList<>();
 
        // 1. Venue: V1+V2+V3, Session Number: 1, Day: 2025-03-10, Start: 12:30, Exams: 2
@@ -639,6 +641,11 @@ public class Session implements StreamManager, ManageableListItem {
     public void streamOut(BufferedWriter bw, int nthItem) throws IOException
     {
 
+    }
+
+    @Override
+    public Object[] toTableRow() {
+        return new Object[] { this.venue.getId(), this.getDate() };
     }
 
     @Override

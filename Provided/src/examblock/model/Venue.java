@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents an exam venue, consisting of one or more {@link Room}s.
@@ -272,6 +273,9 @@ public class Venue extends Room {
                          int nthItem)
             throws IOException {
 
+        // 7. W1+W2 (15 AARA desks)
+        //Room Count: 2, Rooms: S101 S102, Rows: 3, Columns: 5, Desks: 15, AARA: true
+
         String heading = CSSE7023.getLine(br);
 // Read the next non-blank, non-comment string from the reader and return trimmed string
         if (heading == null) {
@@ -286,7 +290,7 @@ public class Venue extends Room {
             throw new RuntimeException("Room index out of sync!");
         }
 
-// Extract the venue ID: cut before " (" if present
+        // Extract the venue ID: cut before " (" if present
         String rawId = bits[1].trim();
         int parenIndex = rawId.indexOf(" (");
         id = (parenIndex != -1) ? rawId.substring(0, parenIndex).trim() : rawId;
@@ -304,9 +308,13 @@ public class Venue extends Room {
                 this.roomCount =  CSSE7023.toInt(potentialCount, "Number format exception parsing Venue "
                         );
             } else if (part.startsWith("Rooms:")) {
+               // String[] RoomIdsv2 = CSSE7023.keyValuePair(part.split(":")[1].trim(), " ");
+
                 String[] roomIds = part.split(":")[1].trim().split("\\s+");
                 // first split by : than by one or more spaces
-                this.rooms = new RoomList(registry);
+
+                this.rooms = new RoomList(registry); // like this we have all the rooms already not what we want
+                this.rooms.clear(); // make it empty
                 for (String roomId : roomIds) {
                     Room room = registry.find(roomId, Room.class);
                     if (room == null) {
@@ -361,9 +369,15 @@ public class Venue extends Room {
         };
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Venue venue)) return false;
+        if (!super.equals(o)) return false;
+        return roomCount == venue.roomCount && rows == venue.rows && columns == venue.columns && totalDesks == venue.totalDesks && aara == venue.aara && nthItem == venue.nthItem && Objects.equals(rooms, venue.rooms) && Objects.equals(id, venue.id);
+    }
 
-
-
-
-
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), roomCount, rooms, rows, columns, totalDesks, aara, id, nthItem);
+    }
 }
