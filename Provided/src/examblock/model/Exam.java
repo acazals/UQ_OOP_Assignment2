@@ -232,10 +232,10 @@ public class Exam implements StreamManager, ManageableListItem{
         }
         title.append("Assessment\n");
         title.append(subject.getTitle());
-        if (paper != '\0') {
+        if ( paper != null && paper != '\0' ) {
             title.append(" Paper " + paper);
         }
-        if (subtitle != "") {
+        if ( subtitle != null && subtitle != "") {
             title.append("\n" + subtitle);
         }
         title.append("\n");

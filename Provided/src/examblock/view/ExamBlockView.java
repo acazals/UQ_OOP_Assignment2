@@ -5,16 +5,13 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
 
 
 public class ExamBlockView implements ModelObserver {
@@ -159,8 +156,7 @@ public class ExamBlockView implements ModelObserver {
         this.mySessions.addAll(SessionArrayList); // add all the existing venues
         this.updateSessionTable(mySessions);
 
-        this.TopPanel = this.createTopPanel();
-        this.BottomPanel = this.createBottomPanel();
+
 
         Frame = this.CreateFrame();
 
@@ -226,6 +222,7 @@ public class ExamBlockView implements ModelObserver {
 
         this.tabbedPane = tabbedPane;
         panel.add(tabbedPane, BorderLayout.CENTER);
+
         return panel;
 
     }
@@ -253,8 +250,8 @@ public class ExamBlockView implements ModelObserver {
         JButton addButton = new JButton("Add");
         this.addButton = addButton;
 
-        JButton clearButton = new JButton("Clear");
-        this.clearButton = clearButton;
+
+        this.clearButton = new JButton("Clear");
 
         Dimension buttonSize = new Dimension(100, 40);
         finaliseButton.setPreferredSize(buttonSize);
@@ -267,7 +264,7 @@ public class ExamBlockView implements ModelObserver {
 
         topPanel.add(buttonPanel);
 
-        //this.TopPanel = topPanel;
+
         return topPanel;
     }
 
@@ -366,6 +363,8 @@ public class ExamBlockView implements ModelObserver {
 
 
         // Create a vertical split pane (top & bottom)
+        this.TopPanel = this.createTopPanel();
+        this.BottomPanel = this.createBottomPanel();
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, this.TopPanel, this.BottomPanel);
         splitPane.setDividerLocation(this.Frame.getHeight() / 2); // Start with equal split
         splitPane.setResizeWeight(0.5); // Keep halves balanced on resize
@@ -379,13 +378,21 @@ public class ExamBlockView implements ModelObserver {
 
     public void removeAllSelections() {
         //  table selection
-        if (ExamTable != null) {
-            ExamTable.clearSelection();
+        System.out.println("ExamTable: " + ExamTableSelection);
+        if (ExamTableSelection != null) {
+            System.out.println("Selected rows before clear: " + ExamTableSelection.getSelectedRowCount());
+            ExamTableSelection.clearSelection();
+            ExamTableSelection.repaint();
+            System.out.println("Selected rows after clear: " + ExamTableSelection.getSelectedRowCount());
         }
 
         //  tree selection
-        if (sessionTree != null) {
+        if (this.getTree() != null) {
+            System.out.println("Tree selection before clear: " + sessionTree.getSelectionPath());
             sessionTree.clearSelection();
+            System.out.println("Tree selection after clear: " + sessionTree.getSelectionPath());
+
+            sessionTree.repaint();
         }
 
 //        // Optionally : should we  reset tab to first one??
@@ -540,6 +547,53 @@ public class ExamBlockView implements ModelObserver {
             case "CMD_ADD" -> handleAdd();
         }
     }
+
+    public void updateTree(SessionList sessions, VenueList venues) {
+        // === Root node: "Sessions"
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Sessions");
+
+        // === Existing Sessions node
+        DefaultMutableTreeNode existingSessionsNode =
+                new DefaultMutableTreeNode("Existing Sessions (" + sessions.size() + ")");
+
+        for (Session session : sessions.all()) {
+            String sessionLabel = "Session " + session.getId()
+                    + " (" + session.getDate() + " " + session.getTime() + ")";
+            DefaultMutableTreeNode sessionNode = new DefaultMutableTreeNode(sessionLabel);
+            sessionNode.setUserObject(session); // Attach session object for future selection
+
+            // Exams folder for that session
+            ArrayList<Exam> exams = (ArrayList<Exam>) session.getExams();
+            DefaultMutableTreeNode examsNode = new DefaultMutableTreeNode("Exams (" + exams.size() + ")");
+            for (Exam exam : exams) {
+                DefaultMutableTreeNode examNode = new DefaultMutableTreeNode("Exam: " + exam.getTitle());
+                examNode.setUserObject(exam);
+                examsNode.add(examNode);
+            }
+
+            sessionNode.add(examsNode);
+            existingSessionsNode.add(sessionNode);
+        }
+
+        // === "Create a New Session" node
+        DefaultMutableTreeNode newSessionNode = new DefaultMutableTreeNode("Create a New Session");
+        for (Venue venue : venues.all()) {
+            String venueLabel = "Venue " + venue.getId() + " (" + venue.deskCount() + " desks)";
+            DefaultMutableTreeNode venueNode = new DefaultMutableTreeNode(venueLabel);
+            venueNode.setUserObject(venue); // Attach venue object for later use
+            newSessionNode.add(venueNode);
+        }
+
+        // === Assemble the final tree
+        root.add(existingSessionsNode);
+        root.add(newSessionNode);
+
+        // === Update tree model
+        DefaultTreeModel model = new DefaultTreeModel(root);
+        this.getTree().setModel(model);
+        this.getTree().updateUI();
+    }
+
 
     private void handleAdd() {
         int examIndex = this.getSelectedExamRows()[0];

@@ -15,34 +15,34 @@ public class ExamBlockController {
     private ExamBlockModel myModel;
 
     private void clearButtonClicked() {
-        myModel.notifyObservers("CMD_CLEAR");
+        System.out.println("CLEAR");
+        this.myView.removeAllSelections();
+
     }
 
     private void addButtonClicked() {
-        myModel.notifyObservers("CMD_ADD");
+
+
     }
 
     public ExamBlockController() {
 
         ExamBlockModel model = new ExamBlockModel();
-
-        model.loadFromFile(model.getRegistry(), "C:\\Users\\PePeW\\OneDrive\\Bureau\\CAZALS\\UQ_OOP_Assignment2-main\\UQ_OOP_Assignment2-main\\Provided\\examblock.ebd");
+        this.myModel = model;
+        myModel.loadFromFile(model.getRegistry(), "C:\\Users\\PePeW\\OneDrive\\Bureau\\CAZALS\\UQ_OOP_Assignment2-main\\UQ_OOP_Assignment2-main\\Provided\\examblock.ebd");
         // now we have all the data in the registry
-        ExamBlockView view = new ExamBlockView(model.getRegistry());
-        model.addObserver(view); // register the view as an observer
+        this.myView = new ExamBlockView(model.getRegistry());
+        model.addObserver(myView); // register the view as an observer
+        myView.updateTree(this.myModel.getSessions(), this.myModel.getVenues());
+        myView.display();
 
-        view.addClearButtonListener(e -> clearButtonClicked());
+        myView.addClearButtonListener(e -> {
+            System.out.println("CLEAR CLICKED");
+            clearButtonClicked();
 
-        view.addAddButtonListener(e-> addButtonClicked());
+        });
 
-
-        view.display();
-
-        // internal ; subject name ; date; time ; AARA ; non AARA count
-        // AARA / not AARA  => stream out all students for that subjetc
-        // student : AARA / not AARA
-        // display up left : subjec
-
+        myView.addAddButtonListener(e-> addButtonClicked());
 
     }
 
