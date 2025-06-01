@@ -503,16 +503,18 @@ public class Exam implements StreamManager, ManageableListItem{
         return count;
     }
 
-    @Override
     public boolean equals(Object o) {
+        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+
         Exam exam = (Exam) o;
-        return Objects.equals(getSubject(), exam.getSubject()) && examType == exam.examType && Objects.equals(paper, exam.paper) && Objects.equals(subtitle, exam.subtitle) && Objects.equals(unit, exam.unit) && Objects.equals(examDate, exam.examDate) && Objects.equals(examTime, exam.examTime) && Objects.equals(getId(), exam.getId());
+
+        return Objects.equals(id, exam.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getSubject(), examType, paper, subtitle, unit, examDate, examTime, getId());
+        return Objects.hash(subject, examType, paper, subtitle, unit, examDate, examTime, id, registry, nthItem);
     }
 }
 

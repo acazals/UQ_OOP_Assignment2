@@ -27,7 +27,7 @@ public class ExamBlockView implements ModelObserver {
 
     private DefaultMutableTreeNode rootNode;
     private DefaultMutableTreeNode existingSessionsNode;
-    private DefaultMutableTreeNode newSessionNode;
+    private DefaultMutableTreeNode newSessionNode; // used to store the Venues ... new because this is the name of it on the display
 
     private JPanel BottomPanel;
     private JPanel TopPanel;
@@ -480,16 +480,16 @@ public class ExamBlockView implements ModelObserver {
 
     private void handleCreateNewSession(Venue venue, Exam exam) {
         try {
-            SessionList sessions = this.model.getSessions();
+            // check that we do not already have that exam in that venue in an already existing sessions
 
             // Check for duplicate session
-            if (sessions.getExistingSessionTotal(venue, exam) != 0) {
+            if (this.mySessions.getExistingSessionTotal(venue, exam) != 0) {
                 throw new IllegalStateException("Session Already Exists with that exam in that Venue");
             }
 
             // Check capacity
             boolean isAara = venue.isAara();
-            int studentCount = this.getNbStudent(exam, isAara);
+            int studentCount = this.getNbStudent(exam, isAara); // private method to counnt students
 
             if (studentCount > venue.deskCount()) {
                 throw new IllegalStateException("Too many students in that venue");
@@ -497,8 +497,23 @@ public class ExamBlockView implements ModelObserver {
 
             // Confirm and create
             if (this.confirmExamAddition()) {
-                int unused = sessions.getSessionNewTotal(venue, exam, studentCount);
+                int StdCountv2 = this.mySessions.getSessionNewTotal(venue, exam, studentCount); // creates the session, add it to the sessionList
+                // ADDS no exam
+                // just returns an int telling u how many students will be in that session : can be more then what the session can fit
                 // you may want to store/use `unused` depending on side effects of this call
+                // here we already have checked how many AARA corresponding students will take that exam
+                // lets check again
+                if (studentCount != StdCountv2) {
+                    throw new IllegalStateException(" these should be the same " + studentCount+ " and " + StdCountv2);
+                } else {
+                    // then we are good to go
+                    // we need to add the xam in that session :
+                    // first find the session itself
+                    String potentialID = venue.getId() + "_" + exam.getDate() + "_" + exam.getTime();
+                    Session Matching = this.mySessions.get(potentialID); // throws an error if not found
+                    Matching.scheduleExam(exam);
+                    this.updateTree(this.mySessions, this.myVenues);
+                }
             } else {
                 throw new IllegalStateException("User cancelled");
             }
@@ -517,7 +532,7 @@ public class ExamBlockView implements ModelObserver {
 
             // Check AARA and capacity
             boolean isAara = session.getVenue().isAara();
-            int studentCount = this.getNbStudent(exam, isAara);
+            int studentCount = this.getNbStudent(exam, isAara); // private method
 
             if (!session.getVenue().willFit(studentCount)) {
                 throw new IllegalStateException("Too many Students Already");
@@ -526,6 +541,11 @@ public class ExamBlockView implements ModelObserver {
             // Confirm and schedule
             if (this.confirmExamAddition()) {
                 session.scheduleExam(exam);
+                // here we are actually adding this exam to our session
+                // here we simply changed a session already existing
+                // therefore we just need to update the sessions
+                this.updateTree(this.mySessions, this.myVenues);
+
             } else {
                 throw new IllegalStateException("User cancelled");
             }
@@ -544,30 +564,6 @@ public class ExamBlockView implements ModelObserver {
         }
     }
 
-    private int getSessionIndexInTree(Session session) {
-        DefaultMutableTreeNode root = (DefaultMutableTreeNode) sessionTree.getModel().getRoot();
-
-        if (root == null) return -1;
-
-        // Find the "Existing Sessions" node
-        Enumeration<TreeNode> children = root.children();
-        while (children.hasMoreElements()) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode) children.nextElement();
-            if (node.toString().startsWith("Existing Sessions")) {
-
-                // Loop over children of Existing Sessions (i.e., the session nodes)
-                for (int i = 0; i < node.getChildCount(); i++) {
-                    DefaultMutableTreeNode sessionNode = (DefaultMutableTreeNode) node.getChildAt(i);
-                    Object obj = sessionNode.getUserObject();
-                    if (obj instanceof Session s && s.equals(session)) {
-                        return i;
-                    }
-                }
-            }
-        }
-
-        return -1; // Not found
-    }
 
 
     private void initializeTree() {
@@ -641,9 +637,9 @@ public class ExamBlockView implements ModelObserver {
 
             if (!sessionExists) {
                 // Create a new session node
-                String label = "Session " + session.getId() + " (" + session.getDate() + " " + session.getTime() + ")";
-                DefaultMutableTreeNode sessionNode = new DefaultMutableTreeNode(label);
-                sessionNode.setUserObject(session);
+                String label = "Session " + session.getId() + " (" + session.getDate() + " " + session.getTime() + ") Remaining Seats = " + (session.getVenue().deskCount() - session.countStudents()) + " AARA = " + session.getVenue().isAara();
+                DefaultMutableTreeNode sessionNode = new DefaultMutableTreeNode(session);
+
                 sessionNodeMap.put(sessionNode, session);
 
                 ArrayList<Exam> exams = (ArrayList<Exam>) session.getExams();

@@ -71,8 +71,18 @@ public class Session implements StreamManager, ManageableListItem {
 
     private int nthItem;
 
+    private String id;
+
+
+    private String generateSessionId() {
+        String venueId = venue.getId(); // assuming getId() returns a String
+        String date = day.toString();   // formatted as yyyy-MM-dd
+        String time = start.toString(); // formatted as HH:mm or HH:mm:ss
+        return venueId + "_" + date + "_" + time;
+    }
+
     public String getId() {
-        return Integer.toString(this.nthItem);
+        return this.generateSessionId();
     }
 
     /**
@@ -196,7 +206,7 @@ public class Session implements StreamManager, ManageableListItem {
         int nbSTudent =0;
         List<Student> allStudents = this.registry.getAll(Student.class);
         for (Student mySTudent : allStudents) {
-            if (mySTudent.getExams().all().contains(exam)) {
+            if (mySTudent.getSubjects().all().contains(exam.getSubject()) && mySTudent.isAara().equals(this.getVenue().isAara())) {
                 nbSTudent +=1;
             }
         }
@@ -365,13 +375,7 @@ public class Session implements StreamManager, ManageableListItem {
      */
     @Override
     public String toString() {
-        return this.venue.venueId()
-                + ": "
-                + this.sessionNumber
-                + ": "
-                + this.day.toString()
-                + " "
-                + this.start.toString();
+        return "Session " + this.getId() + " (" + this.day + " " + this.start + ") Remaining Seats = " + (venue.deskCount() - studentCount);
     }
 
     @Override
@@ -457,6 +461,8 @@ public class Session implements StreamManager, ManageableListItem {
 
         return sb.toString();
     }
+
+
 
 
     private Exam parseExam( String examLine) {
