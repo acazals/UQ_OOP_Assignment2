@@ -203,6 +203,7 @@ public class Session implements StreamManager, ManageableListItem {
      */
     public void scheduleExam(Exam exam) {
         // now we are going to get the number of STudents through the registry
+
         int nbSTudent =0;
         List<Student> allStudents = this.registry.getAll(Student.class);
         for (Student mySTudent : allStudents) {
@@ -212,6 +213,15 @@ public class Session implements StreamManager, ManageableListItem {
         }
         studentCount += nbSTudent;
         exams.add(exam);
+    }
+
+    private StudentList Cohort() {
+        StudentList cohort = new StudentList(this.registry);
+
+        for (Student Std : this.registry.getAll(Student.class)) {
+            cohort.add(Std);
+        }
+        return  cohort;
     }
 
     /**
@@ -227,6 +237,7 @@ public class Session implements StreamManager, ManageableListItem {
         int startDesk = 1;
         int finishDesk = 1;
         int totalStudents = this.countStudents();
+        this.desks = new Desk[rows][columns]; // making a new one
         if (totalStudents <= totalDesks) {
             int gaps = 0;
             boolean skipColumns = false;
@@ -298,6 +309,10 @@ public class Session implements StreamManager, ManageableListItem {
         }
     }
 
+    private int getDeskNumberFromCoordinates(int i, int j, int rows) {
+        return j * rows + i + 1;
+    }
+
     /**
      * Prints the layout of the desks in this session in the venue.
      * Prints a grid of the deskNumber, family name, and given name and initial for each desk.
@@ -305,12 +320,17 @@ public class Session implements StreamManager, ManageableListItem {
     public void printDesks() {
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < columns; j++) {
-                System.out.printf("%-15s", "Desk " + desks[i][j].deskNumber());
+                if (desks[i][j] != null) {
+                    System.out.printf("%-15s", "Desk " + getDeskNumberFromCoordinates(i, j, rows));
+                } else {
+                    System.out.printf("%-15s", "Desk " + this.getDeskNumberFromCoordinates(i,j, this.rows));
+                }
+
             }
             System.out.println();
             for (int j = 0; j < columns; j++) {
                 // print any nulls as empty strings, not a null
-                if (desks[i][j].deskFamilyName() == null) {
+                if (desks[i][j] == null) {
                     System.out.printf("%-15s", "");
                 } else {
                     System.out.printf("%-15s", desks[i][j].deskFamilyName());
@@ -319,7 +339,7 @@ public class Session implements StreamManager, ManageableListItem {
             System.out.println();
             for (int j = 0; j < columns; j++) {
                 // print any nulls as empty strings, not a null
-                if (desks[i][j].deskGivenAndInit() == null) {
+                if (desks[i][j] == null) {
                     System.out.printf("%-15s", "");
                 } else {
                     System.out.printf("%-15s", desks[i][j].deskGivenAndInit());
@@ -405,7 +425,10 @@ public class Session implements StreamManager, ManageableListItem {
 
 
             this.venue = registry.get(venueID.trim(), Venue.class);
-            //System.out.println("found venue" + this.venue.getId());
+            this.rows = venue.getRows();
+            this.columns = venue.getColumns();
+            this.desks = new Desk[rows][columns]; // initializing the matrix
+                    //System.out.println("found venue" + this.venue.getId());
 
             // Session Number
 
@@ -542,12 +565,19 @@ public class Session implements StreamManager, ManageableListItem {
         Desk myDesk = new Desk(deskNumber);
         Student myStudent = this.registry.get(lui, Student.class);
         myDesk.setStudent(myStudent);
+        int[] deskPosition = this.getDeskCoordinates(deskNumber);
+        this.desks[deskPosition[0]][deskPosition[0]] = myDesk;
         return myDesk;
 
 
     }
 
 
+    private int[] getDeskCoordinates(int deskNumber) {
+        int j = (deskNumber - 1) / this.rows; // column index
+        int i = (deskNumber - 1) % this.rows; // row index
+        return new int[]{i, j};
+    }
 
 
     @Override
@@ -556,6 +586,7 @@ public class Session implements StreamManager, ManageableListItem {
             this.registry = registry;
             this.exams = new ExamList(registry);
             exams.clear(); // clearing all exams
+
             this.basicDesk = new ArrayList<>();
 
        // 1. Venue: V1+V2+V3, Session Number: 1, Day: 2025-03-10, Start: 12:30, Exams: 2
@@ -602,6 +633,10 @@ public class Session implements StreamManager, ManageableListItem {
                         Desk myDesk = this.parseDeskLine(line);
                         System.out.println(myDesk.toString());
                         this.basicDesk.add(myDesk);
+                        // we also need to add the desk to our matrix
+                        int myLine = this.getDeskCoordinates(myDesk.deskNumber())[0];
+                        int myColumn = this.getDeskCoordinates(myDesk.deskNumber())[1];
+                        this.desks[myLine][myColumn] = myDesk;
                         if (i == deskCount -1 && examScheduled == examCount) {
                             // then last desk for the last exam
                             // we keep that line
@@ -637,6 +672,8 @@ public class Session implements StreamManager, ManageableListItem {
 
             this.studentCount = this.basicDesk.size();
             this.totalDesks = this.studentCount;
+            this.allocateStudents(this.exams, this.Cohort());
+            this.printDesks();
 
             // You can assign rows/columns here if needed
         }

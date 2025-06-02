@@ -30,7 +30,7 @@ public class ExamBlockController {
 
         ExamBlockModel model = new ExamBlockModel();
         this.myModel = model;
-        //myModel.loadFromFile()// quicker way
+        //myModel.loadFromFile();// slower  way
         myModel.loadFromFile(model.getRegistry(), "C:\\Users\\PePeW\\OneDrive\\Bureau\\CAZALS\\UQ_OOP_Assignment2-main\\UQ_OOP_Assignment2-main\\Provided\\examblock.ebd");
         // now we have all the data in the registry
         this.myView = new ExamBlockView(model.getRegistry()); // creates top and bottom panel + tree

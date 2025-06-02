@@ -162,17 +162,24 @@ public class ExamBlockView implements ModelObserver {
         this.TopPanel = this.createTopPanel();
         this.BottomPanel = this.createBottomPanel();
 
-        ExamTable.getSelectionModel().addListSelectionListener(e -> {
+        this.ExamTableSelection.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 System.out.println("ExamTable selection changed: " + Arrays.toString(getSelectedExamRows()));
                 updateAddButtonState();
+                this.updateClearButtonState();
             }
         });
 
-        sessionTree.addTreeSelectionListener(e -> updateAddButtonState());
+        sessionTree.addTreeSelectionListener(e -> {
+            this.updateClearButtonState();
+            updateAddButtonState();
+                }
+        );
+
 
         // Initialise add button state
-        //updateAddButtonState();
+        updateAddButtonState();
+        updateClearButtonState();
 
 
     }
@@ -492,7 +499,7 @@ public class ExamBlockView implements ModelObserver {
             int studentCount = this.getNbStudent(exam, isAara); // private method to counnt students
 
             if (studentCount > venue.deskCount()) {
-                throw new IllegalStateException("Too many students in that venue");
+                throw new IllegalStateException("Too many students in that venue : already and your are trying to fit in :  " + this.getNbStudent(exam, venue.isAara()));
             }
 
             // Confirm and create
@@ -523,6 +530,15 @@ public class ExamBlockView implements ModelObserver {
         }
     }
 
+    private StudentList Cohort() {
+        StudentList cohort = new StudentList(this.model.getRegistry());
+
+        for (Student Std : this.model.getRegistry().getAll(Student.class)) {
+            cohort.add(Std);
+        }
+        return  cohort;
+    }
+
     private void handleAddToExistingSession(Session session, Exam exam) {
         try {
             // Check if date and time match
@@ -544,6 +560,10 @@ public class ExamBlockView implements ModelObserver {
                 // here we are actually adding this exam to our session
                 // here we simply changed a session already existing
                 // therefore we just need to update the sessions
+
+                // now we also need to re allocate the desks
+                session.allocateStudents(this.myExams, this.Cohort());
+                session.printDesks();
                 this.updateTree(this.mySessions, this.myVenues);
 
             } else {
@@ -671,6 +691,21 @@ public class ExamBlockView implements ModelObserver {
             handleAddToExistingSession(session, myExam);
         } else if (userObject instanceof Venue venue) {
             handleCreateNewSession(venue, myExam);
+        }
+    }
+
+
+    private void updateClearButtonState() {
+        boolean examSelected = getSelectedExamRows() != null && getSelectedExamRows().length > 0;
+
+        boolean treeSelected = false;
+        TreePath path = sessionTree.getSelectionPath();
+        if (path != null) {
+            treeSelected = true;
+        }
+
+        if (clearButton != null) {
+            clearButton.setEnabled(examSelected || treeSelected);
         }
     }
 
